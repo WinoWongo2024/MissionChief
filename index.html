@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispà UK Local Operations Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Modernized Dark Theme */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1326; /* Deep Space Blue Background */
+            color: #e2e8f0; /* Soft White Text */
+            min-height: 100vh;
+        }
+        
+        /* Main Container Styling */
+        .card {
+            background-color: #1c2841; /* Dark Card Background - slightly lighter than body */
+            border: 1px solid #334155;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            border-radius: 1rem;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* KPI Card Styling */
+        .kpi-card {
+            background-color: #1c2841;
+            border-left: 4px solid #00d9ff; /* Electric Blue Accent */
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 217, 255, 0.2); 
+        }
+        .kpi-value {
+            color: #00d9ff; /* Electric Blue for main values */
+        }
+        
+        /* Status Text Colors */
+        .status-operational { color: #10b981; } /* Green */
+        .status-planned { color: #f59e0b; } /* Amber */
+        .status-offline { color: #ef4444; } /* Red */
+
+
+        /* News Feed Category Tags - Bolder Colors */
+        .category-tag {
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .category-tag.Corporate { background-color: rgba(255, 193, 7, 0.2); color: #ffc107; } 
+        .category-tag.Expansion { background-color: rgba(0, 217, 255, 0.2); color: #00d9ff; } 
+        .category-tag.Police { background-color: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .category-tag.Fire { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .category-tag.Medical { background-color: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .category-tag.SAR { background-color: rgba(168, 85, 247, 0.2); color: #c084fc; }
+        .category-tag.Logistics { background-color: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+        
+        /* Scrollbar Styling for News Feed and Tables */
+        .scrollable-content::-webkit-scrollbar { width: 8px; }
+        .scrollable-content::-webkit-scrollbar-track { background: #1c2841; }
+        .scrollable-content::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .scrollable-content::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Responsive Table Styling - Key for Mobile */
+        .table-responsive-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .data-table th, .data-table td {
+            white-space: nowrap; 
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-6 md:mb-10">
+            <!-- Adjusted for better mobile scaling: text-3xl on desktop, text-2xl on mobile -->
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight">
+                <span class="text-blue-400">Dispà UK</span> Operations Dashboard
+            </h1>
+            <p id="update-time" class="text-sm text-gray-400 mt-1">
+                Last Data Refresh: Loading...
+            </p>
+        </header>
+
+        <!-- Region Selector -->
+        <div class="card p-4 md:p-6 mb-8 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+            <label for="region-selector" class="text-base sm:text-lg font-semibold text-white">View Local Operations For:</label>
+            <select id="region-selector" class="bg-[#0d1326] border border-gray-600 rounded-lg p-2 text-white text-sm sm:text-base focus:ring-blue-500 focus:border-blue-500 w-full sm:w-2/5 md:w-1/3" onchange="handleRegionChange(this.value)">
+                <option value="default" disabled selected>Select Your Region</option>
+                <option value="London_Central">Central, South/North East London Dispatch</option>
+                <option value="London_West">West, South, SW, NW North London Dispatch</option>
+                <option value="Harrogate">Harrogate District Dispatch Centre (ÖestVèl Centrè)</option>
+                <option value="Southampton_Planned">P’mouth, S’ampton, E’leigh Dispatch (Expansion Focus)</option>
+                <option value="Expansion_Planning">UK Expansion Planning</option> <!-- Updated from 'Other' -->
+            </select>
+        </div>
+
+        <!-- Key Performance Indicators (KPIs) - Responsive Grid -->
+        <div id="kpi-summary" class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+            <!-- KPIs will be populated here -->
+        </div>
+
+        <!-- Visualizations and News Feed - Responsive Stacking -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            
+            <!-- Chart Visualization Area (2/3 width on desktop, full width on mobile) -->
+            <div class="card p-4 md:p-6 lg:col-span-2 flex flex-col space-y-4">
+                <h2 class="text-lg md:text-xl font-bold text-white border-b border-gray-700/50 pb-2">Regional Capacity & Service Mix (Global View)</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 h-auto min-h-[300px]">
+                    <div class="h-64 sm:h-auto"><canvas id="assetMixChart"></canvas></div>
+                    <div class="h-64 sm:h-auto"><canvas id="regionalDistributionChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Operational News Feed (1/3 width on desktop, full width on mobile) -->
+            <div class="card p-4 lg:col-span-1 flex flex-col">
+                <h2 class="text-lg md:text-xl font-bold mb-3 text-white flex items-center border-b border-gray-700/50 pb-2">
+                    <span class="mr-2 text-red-500">📢</span> Dispà UK News Feed
+                </h2>
+                <div id="news-feed-container" class="space-y-3 h-full max-h-[500px] overflow-y-auto pr-2 scrollable-content">
+                    <!-- News items will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Local Asset Data Display -->
+        <div class="card">
+            <div class="p-4 md:p-6">
+                <h2 id="local-viewer-title" class="text-lg sm:text-xl font-bold text-blue-400 mb-4">Local Operations: Select a Region Above</h2>
+                <div id="content-container" class="min-h-[25vh]">
+                    <!-- Data table or status message will be injected here -->
+                    <p class="text-center text-gray-500 py-10">Use the selector above to filter local assets.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- GLOBAL VARIABLES AND CONFIGURATION ---
+
+        // Map regions to their dispatch data keys
+        const regionMap = {
+            'London_Central': 'Central,South/North East London Dispatch',
+            'London_West': 'West, South, SW, NW North London Dispatch',
+            'Harrogate': 'Harrogate District Dispatch Centre',
+            'Southampton_Planned': 'P’mouth,S’ampton,E’leigh Dispatch',
+            'Expansion_Planning': 'UK_Conceptual_Expansion' // New key mapping for planning pipeline
+        };
+
+        const areaStatus = {
+            'London_Central': { name: 'Central London / NE', status: 'Operational', color: 'status-operational' },
+            'London_West': { name: 'West London / SW / NW', status: 'Operational', color: 'status-operational' },
+            'Harrogate': { name: 'Harrogate (ÖestVèl Centrè)', status: 'Operational', color: 'status-operational' },
+            'Southampton_Planned': { name: 'Southampton/IoW/P/E (Active)', status: 'Expansion Focus', color: 'status-planned' }, 
+            'Expansion_Planning': { name: 'UK Conceptual Planning', status: 'Conceptual', color: 'status-offline' },
+            'default': { name: 'Select Region', status: 'Unknown', color: 'text-gray-400' }
+        };
+
+        // Target: October 29th, 2025 at 22:30:00 ÖVST (CEST equivalent is UTC+2).
+        // Convert to UTC: 22:30 - 2 hours = 20:30 UTC.
+        const TARGET_DATE_MS = new Date('2025-10-29T20:30:00Z').getTime(); 
+        
+        let countdownInterval = null;
+        let activeRegionKey = 'default';
+        let assetMixChart = null;
+        let regionalChart = null;
+        let stats = {};
+
+        // --- CORRECTED AND DETAILED DATA DEFINITION ---
+        const dispatchData = {
+            'Central,South/North East London Dispatch': [
+                { station: "Victoria & Pimlico", code: "BTP-001", location: "BTPV&P", assets: "6 x IRV-002, 6 x IRV-001", type: "Police", count: 12 },
+                { station: "King’s Cross & St Pancras", code: "BTP-002", location: "KGXSP", assets: "2 x IRV-001, 2 x IRV-002", type: "Police", count: 4 },
+                { station: "Chelsea RCC", code: "N/A", location: "N/A", assets: "2 x Flatbed Recovery Vehicle", type: "Logistics", count: 2 },
+                { station: "Greenwich CRS (Millwall)", code: "N/A", location: "GW-CRS", assets: "2 x CRV-001, 2 x CRV-002", type: "SAR", count: 4 },
+                { station: "Chelsea HART BASE (S/B)", code: "HART-001", location: "CB", assets: "6 x AMB-001, 6 x OTL-001", type: "Medical", count: 12 },
+                { station: "Heathrow Airport", code: "HEMS-001", location: "HTR", assets: "2 x HELI-001", type: "Medical", count: 2 },
+                { station: "City of London Fire officer", code: "HRL-001", location: "CoL", assets: "4 x FO-001", type: "Fire", count: 4 },
+                { station: "Elephant and Castle", code: "HRL-002", location: "EaC", assets: "2 x GNRL-PRAC-001", type: "Medical", count: 2 },
+                { station: "Lambeth HRL/SB", code: "HRL-003", location: "LMBTH", assets: "4 x FO-001", type: "Fire", count: 4 },
+                { station: "Holborn HRL Station", code: "HRL-004", location: "HLBRN", assets: "2 x FO-001", type: "Fire", count: 2 },
+                { station: "Vauxhall LAS HRL", code: "HRL-006", location: "VXHL", assets: "2 x RRV-001", type: "Medical", count: 2 },
+                { station: "Rotherhithe SAR HRL", code: "HRL-008", location: "RHTHT", assets: "2 x SAR4x4-001", type: "SAR", count: 2 },
+                { station: "Traffalgar SQR HRL", code: "HRL-009", location: "TRFSQR", assets: "4 x CFR", type: "Medical", count: 4 },
+                { station: "City of Westminster", code: "LAS-001/CC", location: "CoW", assets: "2 x AMB-001, 2 x AMB-002, 2 x RRV-001", type: "Medical", count: 6 },
+                { station: "Euston Ambulance Station", code: "LAS-002", location: "EUS", assets: "4 x AMB-001, 4 x CBRN-001, 2 x OTL-001", type: "Medical", count: 10 },
+                { station: "Knightsbridge Station", code: "LAS-003", location: "KBR", assets: "4 x AMB-001, 2 x RRV-001", type: "Medical", count: 6 },
+                { station: "Westminster Bridge station", code: "LAS-005", location: "WBR", assets: "2 x AMB-001, 2 x AMB-002", type: "Medical", count: 4 },
+                { station: "Guys Hospital AMB-DEP", code: "LAS-006", location: "GH", assets: "2 x AMB-001, 2 x RRV-001", type: "Medical", count: 4 },
+                { station: "Bethnal Green", code: "LFB-001", location: "BTGN", assets: "4 x WC-001, 4 x WL-001", type: "Fire", count: 8 },
+                { station: "City of London", code: "LFB-002", location: "CoL", assets: "2 x RSU-001, 2 x WL-001", type: "Fire", count: 4 },
+                { station: "Deptford LFB Station", code: "LFB-003", location: "DEPT", assets: "2 x RP-001, 2 x CARP-001", type: "Fire", count: 4 },
+                { station: "Euston LFB Station", code: "LFB-004", location: "EUS", assets: "2 x ARAP-001, 2 x BASU-001, 2 x WL-001", type: "Fire", count: 6 },
+                { station: "North Whitechapel Station", code: "LFB-006", location: "NWCP", assets: "2 x WL-001, 2 x WL-002", type: "Fire", count: 4 },
+                { station: "Queensway Station", code: "LFB-007", location: "QW", assets: "2 x WL-001, 4 x WL-002", type: "Fire", count: 6 },
+                { station: "Whitechapel station", code: "LFB-008", location: "WCP", assets: "2 x L4x4-001, 2 x WL-001", type: "Fire", count: 4 },
+                { station: "City of London Police", code: "MET-001", location: "CoLP", assets: "2 x IRV-001, 2 x IRV-002", type: "Police", count: 4 },
+                { station: "Ingleton MET station", code: "MET-002", location: "ING", assets: "2 x IRV-001, 6 x IRV-002", type: "Police", count: 8 },
+                { station: "Westminster/No 10", code: "MET-004", location: "WM10", assets: "2 x DSU-001, 2 x IRV-001", type: "Police", count: 4 },
+                { station: "Queensway Station", code: "MET-005", location: "QW", assets: "2 x ARV-001, 2 x IRV-001, 2 x IRV-002", type: "Police", count: 6 },
+                { station: "Strand Station", code: "MET-006", location: "STR", assets: "2 x IRV-001, 2 x MRAV-001", type: "Police", count: 4 },
+                { station: "Tower Hamlets Station", code: "MET-007", location: "THML", assets: "2 x IRV-001, 2 x IRV-002", type: "Police", count: 4 },
+                { station: "ORM-B-T-01 NR30", code: "N/A", location: "N/A", assets: "2 x RRV", type: "Logistics", count: 2 },
+                { station: "Westminster LFBS N/E L/S", code: "RNLI-001", location: "WSTM’R", assets: "2 x 4X4-001, 2 x ILB-001", type: "SAR", count: 4 },
+                { station: "HQ Westminster", code: "SAR-001", location: "WSTM’R", assets: "2 x OST-001, 2 x OSV-001, 2 x SAR4X4-001", type: "SAR", count: 6 },
+            ],
+            
+            'Harrogate District Dispatch Centre': [
+                { station: "Harrogate Fire station", code: "HRLNY-001", location: "HGFS", assets: "2 x FO-001", type: "Fire", count: 2 },
+                { station: "HDH OTL", code: "HRLNY-002", location: "HDH", assets: "2 x OTL-001", type: "Medical", count: 2 },
+                { station: "Harrogate Fire Station", code: "NYF-001", location: "HFS", assets: "2 x WL-001, 2 x WL-002", type: "Fire", count: 4 },
+                { station: "Knaresborough Fire Station", code: "NYF-002", location: "KBR", assets: "2 x FO-001, 2 x WL-001", type: "Fire", count: 4 },
+                { station: "Ripon Fire Station", code: "NYF-003", location: "RPN", assets: "2 x RP-001, 2 x WL-001", type: "Fire", count: 4 },
+                { station: "Summerbridge Fire station", code: "NYF-004", location: "SMBR", assets: "2 x WL-001, 2 x WL-002", type: "Fire", count: 4 },
+                { station: "Harrogate Magistrate court", code: "NYP-001", location: "HMC", assets: "4 x IRV-001", type: "Police", count: 4 },
+                { station: "Harrogate Police Station", code: "NYP-002", location: "HPS", assets: "2 x DSU-001, 6 x IRV-001", type: "Police", count: 8 },
+                { station: "Pateley Bridge", code: "NYP-003", location: "PBR", assets: "2 x IRV-001, 2 x IRV-002", type: "Police", count: 4 },
+                { station: "Harrogate Hospital Station", code: "YAS-001", location: "H’GTE", assets: "2 x AMB-001, 2 x RRV-001", type: "Medical", count: 4 },
+                { station: "Harrogate Ambulance station", code: "YAS-002", location: "HGTAS", assets: "2 x AMB-001, 2 x AMB-002", type: "Medical", count: 4 },
+            ],
+
+            'P’mouth,S’ampton,E’leigh Dispatch': [
+                { station: "Southampton Central FS", code: "HFS-001", location: "SHPTCFS", assets: "2 x WL-001, 2 x WL-002", type: "Fire", count: 4 },
+                { station: "Redbridge Fire Station", code: "HFS-002", location: "RBR", assets: "2 x BASU-001, 2 x CARP-001", type: "Fire", count: 4 },
+                { station: "St Mary’s Fire station", code: "HFS-003", location: "STMRYFS", assets: "2 x RSU-001, 2 x WL-001", type: "Fire", count: 4 },
+                { station: "Southampton Central Station", code: "HPS-001", location: "SMPC", assets: "1 x IRV-001, 2 x IRV-002", type: "Police", count: 3 },
+                { station: "Portswood Station", code: "HPS-002", location: "PW", assets: "2 x IRV-001, 2 x IRV-002", type: "Police", count: 4 },
+                { station: "Hythe Police Station", code: "HPS-003", location: "HYPS", assets: "2 x IRV-001", type: "Police", count: 2 },
+                { station: "Totton Police Station", code: "HPS-004", location: "TTNPS", assets: "2 x IRV-001", type: "Police", count: 2 },
+                { station: "Shirley Police station", code: "HPS-005", location: "SHLYPS", assets: "4 x IRV-001", type: "Police", count: 4 },
+                { station: "Swaythling Police station", code: "HPS-006", location: "SWYG", assets: "2 x IRV-001", type: "Police", count: 2 },
+                { station: "Marsh Lane HRL", code: "N/A", location: "N/A", assets: "2 x RRV", type: "Logistics", count: 2 },
+                { station: "Redbridge HRL/FO", code: "N/A", location: "N/A", assets: "2 x Fire Officer", type: "Fire", count: 2 },
+                { station: "Regent’s Park Southampton RCC", code: "N/A", location: "N/A", assets: "2 x Flatbed Recovery Vehicle", type: "Logistics", count: 2 },
+                { station: "Southampton General station", code: "SCAS-001", location: "STHPGS", assets: "2 x AMB-001, 2 x AMB-002", type: "Medical", count: 4 },
+                { station: "SGH/HRL", code: "N/A", location: "N/A", assets: "2 x Coastguard Commander", type: "SAR", count: 2 },
+                { station: "Southampton CGS", code: "N/A", location: "N/A", assets: "2 x CRV", type: "SAR", count: 2 },
+                { station: "Southampton Common HRL (S)", code: "N/A", location: "N/A", assets: "2 x Fire Officer", type: "Fire", count: 2 },
+                { station: "Southampton Port SRHQ", code: "SARHQ-001", location: "STHP", assets: "2 x 4x4-001, 2 x CC-001, 2 x OST-001", type: "SAR", count: 6 },
+            ],
+
+            'West, South, SW, NW North London Dispatch': [
+                { station: "St James park", code: "BTP-003", location: "SJP", assets: "2 x IRV-001, 2 x RTPC-001", type: "Police", count: 4 },
+                { station: "MarbleArch LAS HRL", code: "HRL-005", location: "MA", assets: "2 x RRV-001", type: "Medical", count: 2 },
+                { station: "Piccadilly CFR HRL", code: "HRL-007", location: "PCDLY", assets: "2 x CFR-001", type: "Medical", count: 2 },
+                { station: "MarbleArch Station", code: "LAS-004", location: "MA", assets: "4 x AMB-001, 2 x AMB-002", type: "Medical", count: 6 },
+                { station: "MarbleArch", code: "LFB-005", location: "MA", assets: "2 x RSU-001, 4 x WL-001", type: "Fire", count: 6 },
+                { station: "Willesden Fire Station", code: "LFB-009", location: "WFS", assets: "2 x BASU-001, 2 x CARP-001", type: "Fire", count: 4 },
+                { station: "MarbleArch", code: "MET-003", location: "MBA", assets: "2 x IRV-001, 6 x IRV-002", type: "Police", count: 8 },
+            ],
+            
+            'UK_Conceptual_Expansion': [
+                { name: 'North East Yorkshire Dispatch', areas: 'York, Scarborough, Beverley, Filey, Whitby Area', target: 'November 2025 (TBC)', status: 'Planning (Tender Phase)' },
+                { name: 'Hampshire, South Oxfordshire Dispatch', areas: 'Winchester - Camberley Corridor (Linking London/Southampton)', target: 'December 2025 (TBC)', status: 'Conceptual (Feasibility Study)' },
+            ],
+        };
+
+        // Static or user-provided news updates 
+        let newsUpdates = [
+            { timestamp: '23:00 ÖVST', headline: 'Dispà UK Confirms **Southampton** as Next Primary Infrastructure Target.', category: 'Expansion' },
+            { timestamp: '22:50 ÖVST', headline: 'Isle of Wight Major Development Plan Approved: New Hospitals & Operational Centers.', category: 'Expansion' },
+            { timestamp: '22:45 ÖVST', headline: 'End of October Financial Report (EoOFR) Scheduled for **23:59 Release** Today.', category: 'Corporate' },
+            { timestamp: '22:30 ÖVST', headline: 'Harrogate (ÖVC) Station P-003 Declared Full Operational Capacity.', category: 'Police' },
+            { timestamp: '21:40 ÖVST', headline: 'London Central RCC Flatbed Recovery Units Deployed to M4 Emergency.', category: 'Logistics' },
+            { timestamp: '19:00 ÖVST', headline: 'SAR HQ Westminster reports high readiness state for marine operations.', category: 'SAR' },
+        ];
+
+
+        // --- UTILITY FUNCTIONS ---
+
+        // Helper function to convert time to ÖVST (CEST equivalent)
+        function getÖestVèlTime() {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const övstDate = new Date(utc + (3600000 * 2)); 
+            const hours = String(övstDate.getHours()).padStart(2, '0');
+            const minutes = String(övstDate.getMinutes()).padStart(2, '0');
+            const seconds = String(övstDate.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds} ÖVST`;
+        }
+
+        // Countdown function
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = TARGET_DATE_MS - now;
+            const countdownElement = document.getElementById('countdown-timer');
+
+            if (!countdownElement) {
+                 clearInterval(countdownInterval);
+                 countdownInterval = null;
+                 return;
+            }
+
+            if (distance < 0) {
+                countdownElement.innerHTML = "SYSTEM **LIVE** (29.10.2025 - 22:30 ÖVST)";
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+                return;
+            }
+
+            // Time calculations for days, hours, minutes and seconds
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // Responsive text sizing for countdown
+            const baseClass = "text-xl sm:text-3xl md:text-5xl font-extrabold text-blue-400";
+            const labelClass = "text-xs sm:text-sm font-semibold text-gray-400";
+
+            countdownElement.innerHTML = 
+                `<span class="${baseClass}">${days.toString().padStart(2, '0')}</span>
+                <span class="${labelClass}">D :</span>
+                <span class="${baseClass}">${hours.toString().padStart(2, '0')}</span>
+                <span class="${labelClass}">H :</span>
+                <span class="${baseClass}">${minutes.toString().padStart(2, '0')}</span>
+                <span class="${labelClass}">M :</span>
+                <span class="${baseClass}">${seconds.toString().padStart(2, '0')}</span>
+                <span class="${labelClass}">S</span>`;
+        }
+
+        // --- STATS CALCULATION ---
+
+        function calculateStats() {
+            let totalUnits = 0;
+            const mix = { Police: 0, Fire: 0, Medical: 0, SAR: 0, Logistics: 0 };
+            const regionalTotals = {};
+
+            Object.keys(dispatchData).forEach(region => {
+                // Skip conceptual expansion data from being counted as active units
+                if (region === 'UK_Conceptual_Expansion') return; 
+
+                let regionTotal = 0;
+                dispatchData[region].forEach(unit => {
+                    totalUnits += unit.count;
+                    regionTotal += unit.count;
+                    const type = mix.hasOwnProperty(unit.type) ? unit.type : 'Logistics';
+                    mix[type] += unit.count;
+                });
+                // Simplify region name for display
+                let displayName;
+                if (region.includes('Harrogate')) {
+                    displayName = 'ÖestVèl Centrè';
+                } else if (region.includes('S’ampton')) {
+                    displayName = 'South Coast Active';
+                } else if (region.includes('West, South, SW, NW')) {
+                    displayName = 'West/NW London';
+                } else {
+                    displayName = region.split(',')[0].trim();
+                }
+                regionalTotals[displayName] = regionTotal; 
+            });
+
+            const policeFireRatio = mix.Police / mix.Fire;
+
+            stats = {
+                totalUnits: totalUnits,
+                assetMix: mix,
+                policeFireRatio: isFinite(policeFireRatio) ? policeFireRatio.toFixed(2) : 'N/A',
+                regionalTotals: regionalTotals
+            };
+        }
+
+        // --- UI RENDERING ---
+
+        function renderKPIs() {
+            const kpiContainer = document.getElementById('kpi-summary');
+            const currentStatus = areaStatus[activeRegionKey] || areaStatus.default;
+
+            // Updated text sizes for responsiveness: text-2xl on mobile, scaling to 3xl on larger screens
+            kpiContainer.innerHTML = `
+                <div class="kpi-card p-3 sm:p-4 rounded-xl">
+                    <p class="text-xs sm:text-sm font-medium text-gray-400">Total Global Units</p>
+                    <p class="text-2xl sm:text-3xl font-extrabold kpi-value">${stats.totalUnits}</p>
+                </div>
+                <div class="kpi-card p-3 sm:p-4 rounded-xl">
+                    <p class="text-xs sm:text-sm font-medium text-gray-400">Police/Fire Ratio</p>
+                    <p class="text-2xl sm:text-3xl font-extrabold text-white">${stats.policeFireRatio}:1</p>
+                </div>
+                <div class="kpi-card p-3 sm:p-4 rounded-xl">
+                    <p class="text-xs sm:text-sm font-medium text-gray-400">Regional Status: ${currentStatus.name.split('(')[0].trim()}</p>
+                    <p class="text-2xl sm:text-3xl font-extrabold ${currentStatus.color}">${currentStatus.status}</p>
+                </div>
+                <div class="kpi-card p-3 sm:p-4 rounded-xl">
+                    <p class="text-xs sm:text-sm font-medium text-gray-400">South Coast Active Units</p>
+                    <p class="text-2xl sm:text-3xl font-extrabold text-red-400">${stats.regionalTotals['South Coast Active'] || 0}</p>
+                </div>
+            `;
+            document.getElementById('update-time').textContent = `Last Data Refresh: ${getÖestVèlTime()}`;
+        }
+        
+        function renderNewsFeed() {
+            const newsContainer = document.getElementById('news-feed-container');
+            newsContainer.innerHTML = '';
+            
+            newsUpdates.forEach(item => {
+                const tagClass = item.category || 'Logistics'; 
+                newsContainer.innerHTML += `
+                    <div class="bg-[#131a31] p-3 rounded-lg border border-gray-700/50 hover:border-blue-500 transition duration-150">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="category-tag ${tagClass}">${item.category}</span>
+                            <span class="text-xs text-gray-500">${item.timestamp}</span>
+                        </div>
+                        <p class="text-sm font-medium text-white">${item.headline}</p>
+                    </div>
+                `;
+            });
+        }
+
+        function renderCharts() {
+            const ctxMix = document.getElementById('assetMixChart').getContext('2d');
+            const ctxRegional = document.getElementById('regionalDistributionChart').getContext('2d');
+
+            const mixLabels = Object.keys(stats.assetMix).filter(k => stats.assetMix[k] > 0);
+            const mixData = mixLabels.map(k => stats.assetMix[k]);
+            
+            const regionalLabels = Object.keys(stats.regionalTotals);
+            const regionalData = Object.values(stats.regionalTotals);
+
+            if (assetMixChart) assetMixChart.destroy();
+            if (regionalChart) regionalChart.destroy();
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#e2e8f0', font: { size: 12 } } }, // Smaller font size for legends
+                    title: { display: true, color: '#e2e8f0', font: { size: 14, weight: '700' } } // Smaller font size for titles
+                },
+                scales: {
+                    x: { display: true, ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(71, 85, 105, 0.2)' } },
+                    y: { display: true, beginAtZero: true, ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(71, 85, 105, 0.2)' } }
+                }
+            };
+
+
+            // Asset Mix Chart (Donut)
+            assetMixChart = new Chart(ctxMix, {
+                type: 'doughnut',
+                data: {
+                    labels: mixLabels,
+                    datasets: [{
+                        data: mixData,
+                        backgroundColor: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#a855f7'],
+                        borderColor: '#1c2841',
+                        borderWidth: 4
+                    }]
+                },
+                options: {
+                    ...chartOptions, 
+                    plugins: { 
+                        ...chartOptions.plugins,
+                        legend: { position: 'bottom', labels: { color: '#e2e8f0', padding: 10, font: { size: 11 } } },
+                        title: { ...chartOptions.plugins.title, text: 'Asset Mix by Service Type' }
+                    }
+                }
+            });
+
+            // Regional Distribution Chart (Bar)
+            regionalChart = new Chart(ctxRegional, {
+                type: 'bar',
+                data: {
+                    labels: regionalLabels,
+                    datasets: [{
+                        label: 'Total Units',
+                        data: regionalData,
+                        backgroundColor: '#00d9ff', 
+                        borderColor: '#00bfff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...chartOptions, 
+                    plugins: {
+                         ...chartOptions.plugins,
+                         legend: { display: false },
+                         title: { ...chartOptions.plugins.title, text: 'Units Deployed by Region' }
+                    },
+                }
+            });
+        }
+        
+        // --- LOCAL ASSET VIEW LOGIC ---
+
+        function handleRegionChange(regionKey) {
+            activeRegionKey = regionKey;
+            
+            // Stop any existing countdown timer
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+
+            calculateStats(); // Recalculate stats with the correct, detailed data
+            renderKPIs(); 
+            renderLocalAssetView(regionKey);
+        }
+
+        function renderLocalAssetView(regionKey) {
+            const container = document.getElementById('content-container');
+            const titleElement = document.getElementById('local-viewer-title');
+            const regionStatus = areaStatus[regionKey] || areaStatus.default;
+            
+            titleElement.textContent = `Local Operations: ${regionStatus.name}`;
+            titleElement.className = `text-lg sm:text-xl font-bold mb-4 ${regionStatus.color}`;
+
+            let htmlContent = '';
+            
+            // --- Content generation for Operational Table (used by active regions) ---
+            function generateAssetTable(data) {
+                if (!data || data.length === 0) {
+                    return `<p class="text-center text-gray-500 py-4">No active units listed for this dispatch area.</p>`;
+                }
+
+                let tableHtml = `
+                    <div class="table-responsive-wrapper max-h-[400px] overflow-y-auto scrollable-content mb-6">
+                        <table class="data-table min-w-full divide-y divide-gray-700">
+                            <thead class="bg-gray-800 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Station / Unit</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Code</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Location ID</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Assets (Quantity | Vehicle Code)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-800">
+                `;
+
+                data.forEach((unit, index) => {
+                    const rowClass = index % 2 === 0 ? 'bg-gray-900/50' : 'bg-gray-800/50';
+                    tableHtml += `
+                        <tr class="${rowClass} hover:bg-gray-700 transition duration-150">
+                            <td class="px-3 py-2 text-xs sm:text-sm font-medium text-white">${unit.station}</td>
+                            <td class="px-3 py-2 text-xs sm:text-sm text-blue-300">${unit.code}</td>
+                            <td class="px-3 py-2 text-xs sm:text-sm text-gray-500">${unit.location}</td>
+                            <td class="px-3 py-2 text-xs sm:text-sm text-gray-300">${unit.assets}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                return tableHtml;
+            }
+
+
+            // --- Case 1: Planned Expansion (Southampton, IoW, etc.) - WITH COUNTDOWN ---
+            if (regionKey === 'Southampton_Planned') {
+                const dispatchKey = regionMap[regionKey];
+                const data = dispatchData[dispatchKey];
+
+                htmlContent += `
+                    <div class="p-4 sm:p-8 text-center bg-[#131a31] rounded-lg border-2 border-dashed border-yellow-500 mb-6">
+                        <p class="text-xl sm:text-3xl font-extrabold text-yellow-400 mb-4">MAJOR SYSTEM EXPANSION INITIATED</p>
+                        <p class="text-sm sm:text-lg text-gray-300">Targeting full **Dispà V2.0 System** integration for Southampton, Isle of Wight, Portsmouth, and Eastleigh.</p>
+                        <p class="text-base font-bold text-white mt-4">Estimated Go-Live (29.10.2025 22:30 ÖVST):</p>
+                        <div id="countdown-timer" class="mt-2 flex justify-center items-end space-x-1 sm:space-x-2">
+                            <!-- Countdown will be injected here -->
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Check the News Feed for real-time expansion announcements!</p>
+                    </div>
+
+                    <h3 class="text-lg text-gray-300 font-semibold mb-3 border-b border-gray-700 pb-1">Current Operational Assets (V1.0 System):</h3>
+                `;
+                
+                htmlContent += generateAssetTable(data);
+
+                // Start the countdown timer
+                updateCountdown();
+                countdownInterval = setInterval(updateCountdown, 1000);
+
+            } else if (regionKey === 'Expansion_Planning') {
+            // --- New Case 2: Conceptual Expansion Planning (No Countdown) ---
+                const data = dispatchData[regionMap[regionKey]];
+                
+                htmlContent = `
+                    <div class="p-4 sm:p-6 bg-[#131a31] rounded-lg border-2 border-dashed border-red-500 mb-6">
+                        <p class="text-xl sm:text-2xl font-extrabold text-red-400 mb-2">CONCEPTUAL EXPANSION PIPELINE</p>
+                        <p class="text-sm sm:text-lg text-gray-300">These regions are currently under high-level planning or feasibility study. Timelines are highly conceptual and subject to change.</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                `;
+
+                data.forEach(plan => {
+                    htmlContent += `
+                        <div class="card p-4">
+                            <h4 class="text-lg font-bold text-yellow-300">${plan.name}</h4>
+                            <p class="text-sm text-gray-400 mt-1">
+                                <span class="font-semibold text-white">Target Area:</span> ${plan.areas}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <span class="font-semibold text-gray-300">Target ETA:</span> ${plan.target}
+                                <span class="mx-3 text-gray-600">|</span>
+                                <span class="font-semibold text-gray-300">Current Phase:</span> ${plan.status}
+                            </p>
+                        </div>
+                    `;
+                });
+                
+                htmlContent += `</div>`;
+            } else if (regionKey === 'default') {
+                // Default message case
+                htmlContent = `<p class="text-center text-gray-500 py-10">Use the selector above to filter local assets.</p>`;
+            } else {
+            // --- Case 3: Standard Operational Region ---
+                const dispatchKey = regionMap[regionKey];
+                const data = dispatchData[dispatchKey];
+                htmlContent = generateAssetTable(data);
+            }
+            
+            container.innerHTML = htmlContent;
+        }
+        
+        // --- INITIALIZATION ---
+        function initDashboard() {
+            // Recalculate stats at init to capture all mock data
+            calculateStats();
+            renderKPIs();
+            renderCharts();
+            renderNewsFeed();
+            // Start the default view 
+            renderLocalAssetView('default');
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+</html>
