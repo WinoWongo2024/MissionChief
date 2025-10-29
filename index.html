@@ -109,20 +109,23 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             
-            <div class="card p-4 md:p-6 lg:col-span-2 flex flex-col space-y-4">
-                <h2 class="text-lg md:text-xl font-bold text-white border-b border-gray-700/50 pb-2">Regional Capacity & Service Mix (Global View)</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 h-auto min-h-[300px]">
-                    <div class="h-64 sm:h-auto"><canvas id="assetMixChart"></canvas></div>
-                    <div class="h-64 sm:h-auto"><canvas id="regionalDistributionChart"></canvas></div>
+            <div id="call-stats-container" class="card p-4 md:p-6 lg:col-span-2 flex flex-col space-y-4">
+                <h2 class="text-lg md:text-xl font-bold text-white border-b border-gray-700/50 pb-2">Real-time Call Statistics & System Load</h2>
                 </div>
-            </div>
-
             <div class="card p-4 lg:col-span-1 flex flex-col">
                 <h2 class="text-lg md:text-xl font-bold mb-3 text-white flex items-center border-b border-gray-700/50 pb-2">
                     <span class="mr-2 text-red-500">📢</span> Dispà UK News Feed
                 </h2>
                 <div id="news-feed-container" class="space-y-3 h-full max-h-[500px] overflow-y-auto pr-2 scrollable-content">
-                    </div>
+                </div>
+            </div>
+
+            <div class="card p-4 md:p-6 lg:col-span-3 flex flex-col space-y-4">
+                <h2 class="text-lg md:text-xl font-bold text-white border-b border-gray-700/50 pb-2">Regional Capacity & Service Mix (Global View)</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 h-auto min-h-[300px]">
+                    <div class="h-64 sm:h-auto"><canvas id="assetMixChart"></canvas></div>
+                    <div class="h-64 sm:h-auto"><canvas id="regionalDistributionChart"></canvas></div>
+                </div>
             </div>
         </div>
         
@@ -173,6 +176,17 @@
         let assetMixChart = null;
         let regionalChart = null;
         let stats = {};
+
+        // NEW: Calls and Capacity Constants
+        const MAX_SIMULTANEOUS_CALLS = 17; // Max capacity given by the prompt
+        const AVG_CALL_DURATION_MINS = 15;
+        const AVG_CALL_FREQUENCY_MIN = 1; // 1x = 1 call per minute
+
+        // NEW: Simulated/Real-Time Call Data (Initial State)
+        let callStats = {
+            currentCalls: 0,
+            callLoadPercentage: 0
+        };
 
         // --- UPDATED AND DETAILED DATA DEFINITION ---
         const dispatchData = {
@@ -340,6 +354,50 @@
                 <span class="${baseClass}">${seconds.toString().padStart(2, '0')}</span>
                 <span class="${labelClass}">S</span>`;
         }
+        
+        // --- NEW: CALL STATS CALCULATION/SIMULATION (Time-Aware) ---
+        function simulateCallStats() {
+            const now = new Date();
+            const hour = now.getHours(); // 0-23
+            const day = now.getDay();    // 0 (Sunday) - 6 (Saturday)
+            const isWeekend = (day === 5 || day === 6); // Friday (5) evening is included with the weekend
+
+            let baseMultiplier = 0;
+            const randomFluctuation = (Math.random() * 0.1) + 0.95; // Fluctuation of 0.95x to 1.05x
+
+            // Define Time Periods (in GMT, which is standard for this dashboard)
+            if (hour >= 0 && hour < 8) {
+                // Night (00:00 - 07:59)
+                baseMultiplier = 0.33 + (Math.random() * 0.17); // 0.33x - 0.5x
+            } else if (hour >= 8 && hour < 12) {
+                // Morning (08:00 - 11:59)
+                baseMultiplier = 0.10 + (Math.random() * 0.23); // 0.10x - 0.33x
+            } else if (hour >= 12 && hour < 17) {
+                // Afternoon (12:00 - 16:59)
+                baseMultiplier = 0.5 + (Math.random() * 1.5); // 0.5x - 2.0x
+            } else if (hour >= 17 && hour < 24) {
+                // Evening (17:00 - 23:59)
+                baseMultiplier = 0.5 + (Math.random() * 0.5); // 0.5x - 1.0x
+
+                // Weekend/Friday Evening Boost
+                if (isWeekend || (day === 5 && hour >= 17)) {
+                    baseMultiplier *= 1.5; // 50% boost for Friday evening and weekends
+                }
+            }
+
+            // Total Load: (Base Call Frequency) * (Time Multiplier) * (Random Noise)
+            // A multiplier of 1x means 1 call per minute * 15 min avg duration = 15 concurrent calls max
+            const maxCallsBasedOnMultiplier = MAX_SIMULTANEOUS_CALLS * baseMultiplier * randomFluctuation;
+            
+            // The number of current calls is proportional to the multiplier
+            let simulatedCalls = Math.round(maxCallsBasedOnMultiplier);
+            
+            // Cap at the system's absolute max capacity
+            callStats.currentCalls = Math.min(simulatedCalls, MAX_SIMULTANEOUS_CALLS);
+            
+            // Calculate load percentage
+            callStats.callLoadPercentage = ((callStats.currentCalls / MAX_SIMULTANEOUS_CALLS) * 100).toFixed(1);
+        }
 
         // --- STATS CALCULATION ---
 
@@ -390,6 +448,18 @@
         function renderKPIs() {
             const kpiContainer = document.getElementById('kpi-summary');
             const currentStatus = areaStatus[activeRegionKey] || areaStatus.default;
+            
+            // Call the new simulation function before rendering
+            simulateCallStats();
+
+            // Determine color for the Current Calls KPI
+            let callColor = 'kpi-value'; // Default blue
+            if (callStats.callLoadPercentage > 80) {
+                 callColor = 'text-red-500'; // High load
+            } else if (callStats.callLoadPercentage > 60) {
+                 callColor = 'text-yellow-400'; // Medium load
+            }
+
 
             // Updated text sizes for responsiveness: text-2xl on mobile, scaling to 3xl on larger screens
             kpiContainer.innerHTML = `
@@ -402,12 +472,12 @@
                     <p class="text-2xl sm:text-3xl font-extrabold text-white">${stats.policeFireRatio}:1</p>
                 </div>
                 <div class="kpi-card p-3 sm:p-4 rounded-xl">
-                    <p class="text-xs sm:text-sm font-medium text-gray-400">Regional Status: ${currentStatus.name.split('(')[0].trim()}</p>
-                    <p class="text-2xl sm:text-3xl font-extrabold ${currentStatus.color}">${currentStatus.status}</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-400">Current Calls (Global)</p>
+                    <p class="text-2xl sm:text-3xl font-extrabold ${callColor}">${callStats.currentCalls} / ${MAX_SIMULTANEOUS_CALLS}</p>
                 </div>
                 <div class="kpi-card p-3 sm:p-4 rounded-xl">
-                    <p class="text-xs sm:text-sm font-medium text-gray-400">South Coast Active Units</p>
-                    <p class="text-2xl sm:text-3xl font-extrabold text-red-400">${stats.regionalTotals['South Coast Active'] || 0}</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-400">Regional Status: ${currentStatus.name.split('(')[0].trim()}</p>
+                    <p class="text-2xl sm:text-3xl font-extrabold ${currentStatus.color}">${currentStatus.status}</p>
                 </div>
             `;
             document.getElementById('update-time').textContent = `Last Data Refresh: ${getUKTime()}`;
@@ -502,6 +572,72 @@
                     },
                 }
             });
+        }
+
+        // --- NEW: RENDER CALL STATS CARD ---
+        function renderCallStatsCard() {
+            const container = document.getElementById('call-stats-container');
+            const max = MAX_SIMULTANEOUS_CALLS;
+            const current = callStats.currentCalls;
+            const percentage = callStats.callLoadPercentage;
+
+            // Determine bar color based on load
+            let barColor = 'bg-blue-500';
+            if (percentage > 80) {
+                barColor = 'bg-red-600';
+            } else if (percentage > 60) {
+                barColor = 'bg-yellow-500';
+            }
+            
+            // Calculate Key Metrics
+            const averageIntervalText = `${AVG_CALL_FREQUENCY_MIN} minute`;
+            const callTimeText = `${AVG_CALL_DURATION_MINS} minutes`;
+            const potentialCallsPerHour = Math.round(60 / AVG_CALL_FREQUENCY_MIN);
+            
+            // The capacity calculation: Max calls * number of asset-heavy services (Police, Fire, Medical, SAR)
+            // Assuming each unit could be tied to a call, this is a rough measure of system *potential*
+            const systemCapacity = stats.assetMix.Police + stats.assetMix.Fire + stats.assetMix.Medical + stats.assetMix.SAR;
+
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div class="kpi-card p-4 rounded-xl border-t-4 border-t-blue-500">
+                        <p class="text-sm font-medium text-gray-400">Current Load (%)</p>
+                        <p class="text-3xl font-extrabold text-white mt-1">${percentage}%</p>
+                    </div>
+                    <div class="kpi-card p-4 rounded-xl border-t-4 border-t-blue-500">
+                        <p class="text-sm font-medium text-gray-400">Max Concurrent Capacity</p>
+                        <p class="text-3xl font-extrabold text-white mt-1">${max}</p>
+                    </div>
+                    <div class="kpi-card p-4 rounded-xl border-t-4 border-t-blue-500">
+                        <p class="text-sm font-medium text-gray-400">Avg. Call Duration</p>
+                        <p class="text-3xl font-extrabold text-white mt-1">${callTimeText}</p>
+                    </div>
+                    <div class="kpi-card p-4 rounded-xl border-t-4 border-t-blue-500">
+                        <p class="text-sm font-medium text-gray-400">System Capacity Potential</p>
+                        <p class="text-3xl font-extrabold text-white mt-1">${systemCapacity}</p>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-semibold text-gray-300">Concurrent Calls In Progress</span>
+                        <span class="text-lg font-bold ${barColor === 'bg-red-600' ? 'text-red-400' : 'text-blue-400'}">${current} / ${max}</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-4">
+                        <div class="h-4 rounded-full ${barColor} transition-all duration-500 ease-out" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+                
+                <div class="p-4 bg-[#131a31] rounded-lg border border-gray-700/50">
+                    <h4 class="text-lg font-bold text-yellow-400 mb-2">Dispatch Model Configuration</h4>
+                    <ul class="text-sm space-y-1 text-gray-400">
+                        <li>**Average Call Start Interval:** One call every **${averageIntervalText}**.</li>
+                        <li>**Expected Calls/Hour:** Up to **${potentialCallsPerHour}** (based on interval).</li>
+                        <li>**Model Note:** The **${current}** current calls are distributed across all active dispatch centers.</li>
+                    </ul>
+                </div>
+            `;
         }
         
         // --- LOCAL ASSET VIEW LOGIC ---
@@ -643,11 +779,22 @@
         function initDashboard() {
             // Recalculate stats at init to capture all mock data
             calculateStats();
+            // Initial call to simulate/fetch data
+            simulateCallStats(); 
+            
             renderKPIs();
             renderCharts();
             renderNewsFeed();
+            renderCallStatsCard(); // NEW: Render the detailed card
+            
             // Start the default view 
             renderLocalAssetView('default');
+
+            // Set up an interval to refresh KPIs (and therefore call stats) every 5 seconds
+            setInterval(() => {
+                renderKPIs(); 
+                renderCallStatsCard();
+            }, 5000); 
         }
 
         window.onload = initDashboard;
