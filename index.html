@@ -645,5 +645,32 @@
 
         window.onload = initDashboard;
     </script>
+    <script>
+    // Register the Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+                console.log('Service Worker registered successfully with scope: ', registration.scope);
+                
+                // Add logic for immediate update detection
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // A new version is ready, inform the user or auto-update
+                            console.log('New content available, waiting for current clients to close or manually refresh.');
+                            // You could add UI code here to prompt the user to refresh
+                        }
+                    });
+                });
+
+            }).catch(error => {
+                console.log('Service Worker registration failed: ', error);
+            });
+        });
+    }
+</script>
+
 </body>
 </html>
