@@ -419,9 +419,11 @@
             // Ensure a minimal count has built up if the page is opened later in the day, 
             // especially at very low multipliers (0.10x). This corrects for the counter 
             // starting at 0 if the page is loaded at 07:00 GMT.
+            // This is critical for the "7:00 and still 0" bug
             if (callsToday === 0 && hour > 0) {
                  // Estimate how many calls should have occurred since midnight (0:00)
-                 const callsSinceMidnightEstimate = Math.round((hour * 60) * 0.2); // Use a baseline low average (0.2x)
+                 // Based on a very low average load (0.2x)
+                 const callsSinceMidnightEstimate = Math.round((hour * 60) * 0.2); 
                  callsToday = Math.max(0, callsSinceMidnightEstimate);
             }
             // ***************************************
@@ -537,6 +539,12 @@
         }
 
         function renderCharts() {
+            // Ensure Chart.js is loaded before trying to get context
+            if (typeof Chart === 'undefined') {
+                console.error("Chart.js not loaded. Cannot render charts.");
+                return;
+            }
+
             const ctxMix = document.getElementById('assetMixChart').getContext('2d');
             const ctxRegional = document.getElementById('regionalDistributionChart').getContext('2d');
 
@@ -800,6 +808,12 @@
         
         // --- INITIALIZATION (Updated Interval) ---
         function initDashboard() {
+            // Check for initial load errors by ensuring the container exists
+            if (!document.getElementById('kpi-summary')) {
+                console.error("Dashboard failed to initialize: Missing 'kpi-summary' element.");
+                return;
+            }
+            
             calculateStats();
             simulateCallStats(); // Initial call to calculate baseline counts
             
@@ -810,11 +824,12 @@
             
             renderLocalAssetView('default');
 
-            // **FIXED:** Refresh interval set to 1 second (1000ms) for real-time feel
-            setInterval(() => {
+            // CLEANED UP: Refresh interval set to 1 second (1000ms) for real-time feel
+            // We use the standard syntax for setInterval to avoid any parsing issues.
+            setInterval(function() {
                 renderKPIs(); // This calls simulateCallStats() which updates all counters
                 renderCallStatsCard();
-            }, **1000**); 
+            }, 1000); 
         }
 
         window.onload = initDashboard;
