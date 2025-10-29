@@ -279,14 +279,15 @@
         // --- UTILITY FUNCTIONS ---
 
         // Helper function to convert time to ÖVST (CEST equivalent)
-        function getÖestVèlTime() {
-            const now = new Date();
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const övstDate = new Date(utc + (3600000 * 2)); 
-            const hours = String(övstDate.getHours()).padStart(2, '0');
-            const minutes = String(övstDate.getMinutes()).padStart(2, '0');
-            const seconds = String(övstDate.getSeconds()).padStart(2, '0');
-            return `${hours}:${minutes}:${seconds} ÖVST`;
+        function getUKTime() {
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const ukDate = new Date(utc); // GMT base
+    const hours = String(ukDate.getHours()).padStart(2, '0');
+    const minutes = String(ukDate.getMinutes()).padStart(2, '0');
+    const seconds = String(ukDate.getSeconds()).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds} GMT`;
+}
         }
 
         // Countdown function
