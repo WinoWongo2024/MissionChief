@@ -1,0 +1,21 @@
+{
+    "name": "Dispà UK Operations",
+    "short_name": "Dispà Ops",
+    "description": "Dispà UK Local Operations Dashboard for asset tracking and planning.",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#0d1326",
+    "theme_color": "#00d9ff",
+    "icons": [
+        {
+            "src": "/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
