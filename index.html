@@ -146,7 +146,6 @@
             'Harrogate': 'Harrogate District Dispatch Centre',
             'Southampton_Planned': 'P’mouth,S’ampton,E’leigh Dispatch',
             'Expansion_Planning': 'UK_Conceptual_Expansion',
-            // FIX: Corrected syntax from assignment to proper object key/value pair
             'Basingstoke_Alton_Oakley': 'Basingstoke,Alton,Oakley Dispatch' 
         };
 
@@ -157,7 +156,6 @@
             'Southampton_Planned': { name: 'Southampton/IoW/P/E (Active)', status: 'Expansion Focus', color: 'status-planned' }, 
             'Expansion_Planning': { name: 'UK Conceptual Planning', status: 'Conceptual', color: 'status-offline' },
             'default': { name: 'Select Region', status: 'Unknown', color: 'text-gray-400' },
-            // FIX: Corrected syntax from assignment to proper object key/value pair
             'Basingstoke_Alton_Oakley': {
                 name: 'Basingstoke, Alton & Oakley Region',
                 status: 'Coming Soon',
@@ -167,7 +165,7 @@
 
         // Target: October 29th, 2025 at 22:30:00 ÖVST (CEST equivalent is UTC+2).
         // Convert to UTC: 22:30 - 2 hours = 20:30 UTC.
-        const TARGET_DATE_MS = new Date('2025-10-29T20:30:00Z').getTime(); // Note: Changed to 20:30Z (UTC) to represent 22:30 ÖVST/CEST
+        const TARGET_DATE_MS = new Date('2025-10-29T20:30:00Z').getTime(); 
         
         let countdownInterval = null;
         let activeRegionKey = 'default';
@@ -175,16 +173,16 @@
         let regionalChart = null;
         let stats = {};
 
-        // --- CORRECTED AND DETAILED DATA DEFINITION ---
+        // --- UPDATED AND DETAILED DATA DEFINITION ---
         const dispatchData = {
             'Central,South/North East London Dispatch': [
                 { station: "Victoria & Pimlico", code: "BTP-001", location: "BTPV&P", assets: "6 x IRV-002, 6 x IRV-001", type: "Police", count: 12 },
                 { station: "King’s Cross & St Pancras", code: "BTP-002", location: "KGXSP", assets: "2 x IRV-001, 2 x IRV-002", type: "Police", count: 4 },
                 { station: "Chelsea RCC", code: "N/A", location: "N/A", assets: "2 x Flatbed Recovery Vehicle", type: "Logistics", count: 2 },
                 { station: "Greenwich CRS (Millwall)", code: "N/A", location: "GW-CRS", assets: "2 x CRV-001, 2 x CRV-002", type: "SAR", count: 4 },
-                { station: "Chelsea HART BASE (S/B)", code: "HART-001", location: "CB", assets: "6 x AMB-001, 6 x OTL-001", type: "Medical", count: 12 },
-                { station: "Heathrow Airport", code: "HEMS-001", location: "HTR", assets: "2 x HELI-001", type: "Medical", count: 2 },
-                { station: "City of London Fire officer", code: "HRL-001", location: "CoL", assets: "4 x FO-001", type: "Fire", count: 4 },
+                { station: "Chelsea HART BASE (S/B)", code: "HART-001", location: "CB", assets: "6 x AMB-001, 6 x OTL-001, 2 x PRV-001, 2 x PRV-002, 2 x SRV-001", type: "Medical", count: 18 },
+                { station: "Heathrow Airport", code: "HEMS-001", location: "HTR", assets: "2 x HELI-001, 2 x RRV-001, 2 x RRV-002, 6 x RRV-003", type: "Medical", count: 12 },
+                { station: "City of London Fire officer", code: "HRL-001", location: "CoL", assets: "2 x FO-001", type: "Fire", count: 2 },
                 { station: "Elephant and Castle", code: "HRL-002", location: "EaC", assets: "2 x GNRL-PRAC-001", type: "Medical", count: 2 },
                 { station: "Lambeth HRL/SB", code: "HRL-003", location: "LMBTH", assets: "4 x FO-001", type: "Fire", count: 4 },
                 { station: "Holborn HRL Station", code: "HRL-004", location: "HLBRN", assets: "2 x FO-001", type: "Fire", count: 2 },
@@ -192,11 +190,11 @@
                 { station: "Rotherhithe SAR HRL", code: "HRL-008", location: "RHTHT", assets: "2 x SAR4x4-001", type: "SAR", count: 2 },
                 { station: "Traffalgar SQR HRL", code: "HRL-009", location: "TRFSQR", assets: "4 x CFR", type: "Medical", count: 4 },
                 { station: "City of Westminster", code: "LAS-001/CC", location: "CoW", assets: "2 x AMB-001, 2 x AMB-002, 2 x RRV-001", type: "Medical", count: 6 },
-                { station: "Euston Ambulance Station", code: "LAS-002", location: "EUS", assets: "4 x AMB-001, 4 x CBRN-001, 2 x OTL-001", type: "Medical", count: 10 },
+                { station: "Euston Ambulance Station", code: "LAS-002", location: "EUS", assets: "4 x AMB-001, 3 x CBRN-001, 2 x OTL-001", type: "Medical", count: 9 },
                 { station: "Knightsbridge Station", code: "LAS-003", location: "KBR", assets: "4 x AMB-001, 2 x RRV-001", type: "Medical", count: 6 },
                 { station: "Westminster Bridge station", code: "LAS-005", location: "WBR", assets: "2 x AMB-001, 2 x AMB-002", type: "Medical", count: 4 },
                 { station: "Guys Hospital AMB-DEP", code: "LAS-006", location: "GH", assets: "2 x AMB-001, 2 x RRV-001", type: "Medical", count: 4 },
-                { station: "Bethnal Green", code: "LFB-001", location: "BTGN", assets: "4 x WC-001, 4 x WL-001", type: "Fire", count: 8 },
+                { station: "Bethnal Green", code: "LFB-001", location: "BTGN", assets: "2 x WC-001, 4 x WL-001", type: "Fire", count: 6 },
                 { station: "City of London", code: "LFB-002", location: "CoL", assets: "2 x RSU-001, 2 x WL-001", type: "Fire", count: 4 },
                 { station: "Deptford LFB Station", code: "LFB-003", location: "DEPT", assets: "2 x RP-001, 2 x CARP-001", type: "Fire", count: 4 },
                 { station: "Euston LFB Station", code: "LFB-004", location: "EUS", assets: "2 x ARAP-001, 2 x BASU-001, 2 x WL-001", type: "Fire", count: 6 },
@@ -227,27 +225,28 @@
                 { station: "Harrogate Hospital Station", code: "YAS-001", location: "H’GTE", assets: "2 x AMB-001, 2 x RRV-001", type: "Medical", count: 4 },
                 { station: "Harrogate Ambulance station", code: "YAS-002", location: "HGTAS", assets: "2 x AMB-001, 2 x AMB-002", type: "Medical", count: 4 },
             ],
-            
+
             'Basingstoke,Alton,Oakley Dispatch': [
-                // Adding placeholder data for the new region
                 { station: "Basingstoke Central FS", code: "HFS-005", location: "BSTK", assets: "2 x WL-001, 2 x WL-002", type: "Fire", count: 4 },
                 { station: "Alton Police Station", code: "HPS-007", location: "ALTN", assets: "2 x IRV-001, 2 x IRV-002", type: "Police", count: 4 },
                 { station: "Oakley RCC (Planned)", code: "N/A", location: "OKLY", assets: "2 x Flatbed Recovery Vehicle", type: "Logistics", count: 2 },
             ],
 
             'P’mouth,S’ampton,E’leigh Dispatch': [
-                { station: "Southampton Central FS", code: "HFS-001", location: "SHPTCFS", assets: "2 x WL-001, 2 x WL-002", type: "Fire", count: 4 },
+                { station: "Southampton Central FS", code: "HFS-001", location: "SHPTCFS", assets: "4 x WL-001, 4 x WL-002", type: "Fire", count: 8 },
                 { station: "Redbridge Fire Station", code: "HFS-002", location: "RBR", assets: "2 x BASU-001, 2 x CARP-001", type: "Fire", count: 4 },
-                { station: "St Mary’s Fire station", code: "HFS-003", location: "STMRYFS", assets: "2 x RSU-001, 2 x WL-001", type: "Fire", count: 4 },
-                { station: "Southampton Central Station", code: "HPS-001", location: "SMPC", assets: "1 x IRV-001, 2 x IRV-002", type: "Police", count: 3 },
-                { station: "Portswood Station", code: "HPS-002", location: "PW", assets: "2 x IRV-001, 2 x IRV-002", type: "Police", count: 4 },
+                { station: "St Mary’s Fire station", code: "HFS-003", location: "STMRYFS", assets: "4 x RSU-001, 2 x WL-001", type: "Fire", count: 6 },
+                { station: "HPFS,IoW Eastleigh HQ", code: "HFS-004", location: "ELGH", assets: "2 x CARP-001, 2 x FO-001", type: "Fire", count: 4 },
+                { station: "Southampton Central Station", code: "HPS-001", location: "SMPC", assets: "4 x IRV-001, 4 x IRV-002", type: "Police", count: 8 },
+                { station: "Portswood Station", code: "HPS-002", location: "PW", assets: "4 x IRV-001, 4 x IRV-002", type: "Police", count: 8 },
                 { station: "Hythe Police Station", code: "HPS-003", location: "HYPS", assets: "2 x IRV-001", type: "Police", count: 2 },
                 { station: "Totton Police Station", code: "HPS-004", location: "TTNPS", assets: "2 x IRV-001", type: "Police", count: 2 },
                 { station: "Shirley Police station", code: "HPS-005", location: "SHLYPS", assets: "4 x IRV-001", type: "Police", count: 4 },
-                { station: "Swaythling Police station", code: "HPS-006", location: "SWYG", assets: "2 x IRV-001", type: "Police", count: 2 },
+                { station: "Swaythling Police station", code: "HPS-006", location: "SWYG", assets: "4 x IRV-001", type: "Police", count: 4 },
+                { station: "Eastleigh Airport", code: "HPS-007", location: "EGLHAP", assets: "4 x IRV-001", type: "Police", count: 4 },
                 { station: "Marsh Lane HRL", code: "N/A", location: "N/A", assets: "2 x RRV", type: "Logistics", count: 2 },
-                { station: "Redbridge HRL/FO", code: "N/A", location: "N/A", assets: "2 x Fire Officer", type: "Fire", count: 2 },
-                { station: "Regent’s Park Southampton RCC", code: "N/A", location: "N/A", assets: "2 x Flatbed Recovery Vehicle", type: "Logistics", count: 2 },
+                { station: "Redbridge HRL/FO", code: "N/A", location: "N/A", assets: "4 x Fire Officer", type: "Fire", count: 4 },
+                { station: "Regent’s Park Southampton RCC", code: "N/A", location: "N/A", assets: "4 x Flatbed Recovery Vehicle", type: "Logistics", count: 4 },
                 { station: "Southampton General station", code: "SCAS-001", location: "STHPGS", assets: "2 x AMB-001, 2 x AMB-002", type: "Medical", count: 4 },
                 { station: "SGH/HRL", code: "N/A", location: "N/A", assets: "2 x Coastguard Commander", type: "SAR", count: 2 },
                 { station: "Southampton CGS", code: "N/A", location: "N/A", assets: "2 x CRV", type: "SAR", count: 2 },
@@ -294,9 +293,6 @@
             const seconds = String(ukDate.getSeconds()).padStart(2, '0');
             return `${hours}:${minutes}:${seconds} GMT`;
         }
-
-        // FIX: The original code used a function call 'getÖestVèlTime()' which was not defined.
-        // It's removed here, and 'getUKTime()' is used for the refresh time.
 
         // Countdown function
         function updateCountdown() {
@@ -407,7 +403,6 @@
                     <p class="text-2xl sm:text-3xl font-extrabold text-red-400">${stats.regionalTotals['South Coast Active'] || 0}</p>
                 </div>
             `;
-            // FIX: Using the defined 'getUKTime()' instead of the undefined 'getÖestVèlTime()'
             document.getElementById('update-time').textContent = `Last Data Refresh: ${getUKTime()}`;
         }
         
@@ -515,7 +510,7 @@
 
             calculateStats(); // Recalculate stats with the correct, detailed data
             renderKPIs(); 
-            renderCharts(); // Re-render charts to capture any regional changes (e.g., total unit count)
+            renderCharts(); 
             renderLocalAssetView(regionKey);
         }
 
