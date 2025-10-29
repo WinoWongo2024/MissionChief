@@ -183,14 +183,14 @@
         let regionalChart = null;
         let stats = {};
 
-        // NEW: Calls and Capacity Constants
+        // Call and Capacity Constants
         const MAX_SIMULTANEOUS_CALLS = 17; 
         const AVG_CALL_DURATION_MINS = 15;
         const AVG_CALL_FREQUENCY_MIN = 1; 
         
-        // NEW: Daily Call Counter State
+        // Daily Call Counter State
         let callsToday = 0;
-        let lastDayUpdate = new Date().getDate(); // Initialize with current day
+        let lastDayUpdate = new Date().getDate(); 
 
         // Simulated/Real-Time Call Data (Initial State)
         let callStats = {
@@ -295,7 +295,7 @@
             ],
         };
 
-        // Static or user-provided news updates 
+        // Static or user-provided news updates (UNCHANGED)
         let newsUpdates = [
             { timestamp: '06:30 GMT', headline: '**NEW DISPATCH CENTRE:** Southampton (South Coast Active) Dispatch Centre is now fully operational.', category: 'Expansion' },
             { timestamp: '06:25 GMT', headline: 'Southampton Central FS (`HFS-001`) Declared Full Operational Capacity with **8 Water Carriers**.', category: 'Fire' },
@@ -363,7 +363,7 @@
                 <span class="${labelClass}">S</span>`;
         }
         
-        // --- UPDATED CALL STATS CALCULATION/SIMULATION (Time-Aware and Daily Counter) ---
+        // --- UPDATED CALL STATS CALCULATION/SIMULATION (Daily Counter Fixed) ---
         function simulateCallStats() {
             const now = new Date();
             const hour = now.getHours(); 
@@ -373,7 +373,7 @@
 
             // ** DAILY COUNTER RESET LOGIC **
             if (currentDay !== lastDayUpdate) {
-                callsToday = 0; // Reset counter at midnight
+                callsToday = 0; // Reset counter at midnight GMT
                 lastDayUpdate = currentDay;
             }
             // ******************************
@@ -403,13 +403,27 @@
             callStats.currentCalls = Math.min(simulatedCalls, MAX_SIMULTANEOUS_CALLS);
             callStats.callLoadPercentage = ((callStats.currentCalls / MAX_SIMULTANEOUS_CALLS) * 100).toFixed(1);
             
-            // ** DAILY CALL COUNTER INCREMENT LOGIC **
-            // Increment the counter based on the current load and the refresh interval (5 seconds = 1/12th of a minute)
-            // A multiplier of 1x means approx 1 call every minute.
-            const refreshIntervalSeconds = 5; 
-            const newCallsSinceLastRefresh = Math.round((baseMultiplier * (refreshIntervalSeconds / 60)) * (Math.random() * 0.3 + 0.9)); // Randomize addition
+            // ** DAILY CALL COUNTER INCREMENT LOGIC FIX **
+            // The simulation now refreshes every 1 second (1/60th of a minute)
+            const refreshIntervalSeconds = 1; 
             
-            callsToday += Math.max(0, newCallsSinceLastRefresh); // Only add positive values
+            // Calculate calls based on multiplier (calls/minute) * (fraction of a minute)
+            // Use Math.round to increment by 1 or 0, making the counter appear real-time
+            const avgCallsPerSecond = baseMultiplier / 60; // 1x load = 1 call per minute = 1/60th call per second
+            
+            // Increment logic: Check if a random number (0-1) is less than the probability of a call occurring this second.
+            if (Math.random() < avgCallsPerSecond * refreshIntervalSeconds) {
+                 callsToday += 1;
+            }
+            
+            // Ensure a minimal count has built up if the page is opened later in the day, 
+            // especially at very low multipliers (0.10x). This corrects for the counter 
+            // starting at 0 if the page is loaded at 07:00 GMT.
+            if (callsToday === 0 && hour > 0) {
+                 // Estimate how many calls should have occurred since midnight (0:00)
+                 const callsSinceMidnightEstimate = Math.round((hour * 60) * 0.2); // Use a baseline low average (0.2x)
+                 callsToday = Math.max(0, callsSinceMidnightEstimate);
+            }
             // ***************************************
         }
 
@@ -471,7 +485,6 @@
                  callColor = 'call-medium'; 
             }
             
-            // Determine time of day for display
             const now = new Date();
             const hours = now.getHours();
             let dayPeriod = 'Night';
@@ -785,10 +798,10 @@
             container.innerHTML = htmlContent;
         }
         
-        // --- INITIALIZATION ---
+        // --- INITIALIZATION (Updated Interval) ---
         function initDashboard() {
             calculateStats();
-            simulateCallStats(); // Initial call
+            simulateCallStats(); // Initial call to calculate baseline counts
             
             renderKPIs();
             renderCharts();
@@ -797,17 +810,17 @@
             
             renderLocalAssetView('default');
 
-            // Set up an interval to refresh KPIs, Call Stats, and the Daily Counter every 5 seconds
+            // **FIXED:** Refresh interval set to 1 second (1000ms) for real-time feel
             setInterval(() => {
-                renderKPIs(); 
+                renderKPIs(); // This calls simulateCallStats() which updates all counters
                 renderCallStatsCard();
-            }, 5000); 
+            }, **1000**); 
         }
 
         window.onload = initDashboard;
     </script>
     <script>
-    // Register the Service Worker
+    // Register the Service Worker (PWA functionality)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('/service-worker.js')
