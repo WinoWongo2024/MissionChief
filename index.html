@@ -100,7 +100,8 @@
                 <option value="London_West">West, South, SW, NW North London Dispatch</option>
                 <option value="Harrogate">Harrogate District Dispatch Centre (ÖestVèl Centrè)</option>
                 <option value="Southampton_Planned">P’mouth, S’ampton, E’leigh Dispatch (Expansion Focus)</option>
-                <option value="Expansion_Planning">UK Expansion Planning</option> <!-- Updated from 'Other' -->
+                <option value="Expansion_Planning">UK Expansion Planning</option>
+                <option value="Basingstoke_Alton_Oakley">Basingstoke, Alton, Oakley Dispatch</option><
             </select>
         </div>
 
@@ -154,7 +155,8 @@
             'London_West': 'West, South, SW, NW North London Dispatch',
             'Harrogate': 'Harrogate District Dispatch Centre',
             'Southampton_Planned': 'P’mouth,S’ampton,E’leigh Dispatch',
-            'Expansion_Planning': 'UK_Conceptual_Expansion' // New key mapping for planning pipeline
+            'Expansion_Planning': 'UK_Conceptual_Expansion',
+            regionMap['Basingstoke_Alton_Oakley'] = 'Basingstoke,Alton,Oakley Dispatch';// New key mapping for planning pipeline
         };
 
         const areaStatus = {
@@ -163,7 +165,11 @@
             'Harrogate': { name: 'Harrogate (ÖestVèl Centrè)', status: 'Operational', color: 'status-operational' },
             'Southampton_Planned': { name: 'Southampton/IoW/P/E (Active)', status: 'Expansion Focus', color: 'status-planned' }, 
             'Expansion_Planning': { name: 'UK Conceptual Planning', status: 'Conceptual', color: 'status-offline' },
-            'default': { name: 'Select Region', status: 'Unknown', color: 'text-gray-400' }
+            'default': { name: 'Select Region', status: 'Unknown', color: 'text-gray-400' },
+            areaStatus['Basingstoke_Alton_Oakley'] = {
+    name: 'Basingstoke, Alton & Oakley Region',
+    status: 'Coming Soon',
+    color: 'status-planned'
         };
 
         // Target: October 29th, 2025 at 22:30:00 ÖVST (CEST equivalent is UTC+2).
