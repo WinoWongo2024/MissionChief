@@ -153,7 +153,7 @@
     <script>
         // --- GLOBAL VARIABLES AND CONFIGURATION ---
 
-        // *** UPDATED *** Region map to match new dropdown
+        // (Unchanged)
         const regionMap = {
             'Basingstoke_Alton_Oakley': 'Basingstoke,Alton,Oakley Dispatch',
             'London_Central': 'Central,South/North East London Dispatch',
@@ -164,7 +164,7 @@
             'London_West': 'West, South, SW,NW North London Dispatch'
         };
 
-        // *** UPDATED *** Area status to match new regions
+        // (Unchanged)
         const areaStatus = {
             'London_Central': { name: 'Central London / NE', status: 'Operational', color: 'status-operational' },
             'London_West': { name: 'West London / SW / NW', status: 'Operational', color: 'status-operational' },
@@ -175,18 +175,16 @@
             'Scarborough_Whitby_Bridlington': { name: 'Sc’boro, Whitby, Bridlington', status: 'Operational', color: 'status-operational' },
             'default': { name: 'Select Region', status: 'Unknown', color: 'text-gray-400' }
         };
-
-        // *** REMOVED *** TARGET_DATE_MS and countdownInterval
         
         let activeRegionKey = 'default';
         let assetMixChart = null;
         let regionalChart = null;
         let stats = {};
 
-        // Call and Capacity Constants
-        const MAX_SIMULTANEOUS_CALLS = 24; 
-        const AVG_CALL_DURATION_MINS = 12;
-        const AVG_CALL_FREQUENCY_MIN = 1; 
+        // *** UPDATED *** Call and Capacity Constants
+        const MAX_SIMULTANEOUS_CALLS = 24; // Updated from 17
+        const AVG_CALL_DURATION_MINS = 15; // Unchanged
+        const AVG_CALLS_PER_MINUTE = 3; // Updated (1 call every 20 seconds)
         
         // Daily Call Counter State
         let callsToday = 0;
@@ -199,21 +197,21 @@
         };
 
         // *** UPDATED ***
-        // --- NEW DETAILED DATA DEFINITION (Parsed from your update) ---
+        // --- NEW DETAILED DATA DEFINITION (Re-Parsed based on your feedback) ---
         const dispatchData = {
             'Basingstoke,Alton,Oakley Dispatch': [
                 { station: "Basingstoke Fire Station", code: "HFS-005", location: "BSKS", assets: "2 x BSKS | HFS-005/BASU-001, 2 x BSKS | HFS-005/CARP-001", type: "Fire", count: 4 },
                 { station: "Basingstoke Station", code: "HPS-008", location: "BSKS", assets: "4 x BSKS | HPS-008/IRV-001", type: "Police", count: 4 },
                 { station: "Basingstoke South", code: "HSF-006", location: "BSKS", assets: "2 x BSKS | HSF-006/CARP-001, 2 x BSKS | HSF-006/WC-001", type: "Fire", count: 4 },
                 { station: "Old Basing Police", code: "N/A", location: "N/A", assets: "4 x IRV, 6 x IRV, 6 x IRV", type: "Police", count: 16 },
-                { station: "Basingstoke Hospital", code: "SCAS-003", location: "BSKS", assets: "2 x Ambulance, 2 x BSKS | SCAS-003/AMB-001", type: "Medical", count: 4 }
+                { station: "Basingstoke Hospital", code: "SCAS-003", location: "BSKS", assets: "2 x BSKS | SCAS-003/AMB-001", type: "Medical", count: 2 }
             ],
             'Central,South/North East London Dispatch': [
-                { station: "Victoria & Pimlico", code: "BTP-001", location: "BTPV&P", assets: "2 x ARV, 2 x BTPV&P | BTP-001/IRV-002, 2 x BTPV&P | BTP-001/IRV-001", type: "Police", count: 6 },
-                { station: "King’s Cross & St Pancras", code: "BTP-002", location: "KGXSP", assets: "2 x Armed Traffic Car, 2 x KGXSP | BTP-002/IRV-001, 2 x KGXSP | BTP-002/IRV-002", type: "Police", count: 6 },
+                { station: "Victoria & Pimlico", code: "BTP-001", location: "BTPV&P", assets: "2 x BTPV&P | BTP-001/IRV-002, 2 x BTPV&P | BTP-001/IRV-001", type: "Police", count: 4 },
+                { station: "King’s Cross & St Pancras", code: "BTP-002", location: "KGXSP", assets: "2 x KGXSP | BTP-002/IRV-001, 2 x KGXSP | BTP-002/IRV-002", type: "Police", count: 4 },
                 { station: "Greenwich (Millwall)", code: "CRS-001", location: "GWCH", assets: "2 x GWCH | CRS-001/CRV-001, 2 x GWCH | CRS-001/CRV-002", type: "SAR", count: 4 },
-                { station: "Chelsea HART BASE (S/B)", code: "HART-001", location: "CB", assets: "2 x ATV Carrier, 2 x Ambulance Officer, 2 x CB | HART-001/AMB-001, 2 x CB | HART-001/OTL-001, 2 x CB | HART-001/PRV-001, 2 x CB | HART-001/PRV-002, 2 x CB | HART-001/SRV-001, 2 x Mass Casualty Equipment, 2 x Mass Casualty Equipment, 2 x SRV", type: "Medical", count: 20 },
-                { station: "Heathrow Airport", code: "HEMS-001", location: "HTR", assets: "2 x HEMS, 2 x HTR | HEMS-001/HELI-001, 2 x HTR | HEMS-001/RRV-001, 2 x HTR | HEMS-001/RRV-002, 2 x HTR | HEMS-001/RRV-003", type: "Medical", count: 10 },
+                { station: "Chelsea HART BASE (S/B)", code: "HART-001", location: "CB", assets: "2 x CB | HART-001/AMB-001, 2 x CB | HART-001/OTL-001, 2 x CB | HART-001/PRV-001, 2 x CB | HART-001/PRV-002, 2 x CB | HART-001/SRV-001", type: "Medical", count: 10 },
+                { station: "Heathrow Airport", code: "HEMS-001", location: "HTR", assets: "2 x HTR | HEMS-001/HELI-001, 2 x HTR | HEMS-001/RRV-001, 2 x HTR | HEMS-001/RRV-002, 2 x HTR | HEMS-001/RRV-003", type: "Medical", count: 8 },
                 { station: "City of London Fire officer", code: "HRL-001", location: "CoL", assets: "2 x CoL | HRL-001/FO-001", type: "Fire", count: 2 },
                 { station: "Elephant and Castle", code: "HRL-002", location: "EaC", assets: "2 x EaC | HRL-002/GNRL-PRAC-001", type: "Medical", count: 2 },
                 { station: "Lambeth HRL/SB", code: "HRL-003", location: "LMBTH", assets: "2 x LMBTH | HRL-003/FO-001", type: "Fire", count: 2 },
@@ -221,18 +219,18 @@
                 { station: "Vauxhall LAS HRL", code: "HRL-006", location: "VXHL", assets: "2 x VXHL | HRL-006/RRV-001", type: "Medical", count: 2 },
                 { station: "Rotherhithe SAR HRL", code: "HRL-008", location: "RHTHT", assets: "2 x RHTHT | HRL-008/SAR4x4-001", type: "SAR", count: 2 },
                 { station: "Traffalgar SQR HRL", code: "HRL-009", location: "TRFSQR", assets: "2 x TRFSQR | HRL-009/CFR", type: "Medical", count: 2 },
-                { station: "City of Westminster", code: "LAS-001/CC", location: "CoW", assets: "2 x Ambulance Control Unit, 2 x Ambulance Officer, 2 x CoW | LAS-001/AMB-001, 2 x CoW | LAS-001/AMB-002, 2 x CoW | LAS-001/RRV-001", type: "Medical", count: 10 },
-                { station: "Euston Ambulance Station", code: "LAS-002", location: "EUS", assets: "2 x Ambulance Control Unit, 2 x EUS | LAS-002/AMB-001, 2 x EUS | LAS-002/CBRN-001, 2 x EUS | LAS-002/OTL-001", type: "Medical", count: 8 },
+                { station: "City of Westminster", code: "LAS-001/CC", location: "CoW", assets: "2 x CoW | LAS-001/AMB-001, 2 x CoW | LAS-001/AMB-002, 2 x CoW | LAS-001/RRV-001", type: "Medical", count: 6 },
+                { station: "Euston Ambulance Station", code: "LAS-002", location: "EUS", assets: "2 x EUS | LAS-002/AMB-001, 2 x EUS | LAS-002/CBRN-001, 2 x EUS | LAS-002/OTL-001", type: "Medical", count: 6 },
                 { station: "Knightsbridge Station", code: "LAS-003", location: "KBR", assets: "2 x CBRN Vehicle, 2 x KBR | LAS-003/AMB-001, 2 x KBR | LAS-003/RRV-001", type: "Medical", count: 6 },
                 { station: "Westminster Bridge station", code: "LAS-005", location: "WBR", assets: "2 x WBR | LAS-005/AMB-001, 2 x WBR | LAS-005/AMB-002", type: "Medical", count: 4 },
-                { station: "Guys Hospital AMB-DEP", code: "LAS-006", location: "GH", assets: "2 x Ambulance Officer, 2 x Ambulance Officer, 2 x GH | LAS-006/AMB-001, 2 x GH | LAS-006/RRV-001, 2 x Mass Casualty Equipment", type: "Medical", count: 10 },
+                { station: "Guys Hospital AMB-DEP", code: "LAS-006", location: "GH", assets: "2 x GH | LAS-006/AMB-001, 2 x GH | LAS-006/RRV-001, 2 x Mass Casualty Equipment", type: "Medical", count: 6 },
                 { station: "Bethnal Green", code: "LFB-001", location: "BTGN", assets: "2 x BTGN | LFB-001/WC-001, 2 x BTGN | LFB-001/WL-001, 2 x RP CAFS, 2 x WrL CAFS", type: "Fire", count: 8 },
                 { station: "City of London", code: "LFB-002", location: "CoL", assets: "2 x CoL | LFB-002/RSU-001, 2 x CoL | LFB-002/WL-001, 2 x HazMat Unit", type: "Fire", count: 6 },
                 { station: "Deptford LFB Station", code: "LFB-003", location: "DEPT", assets: "2 x DEPT | LFB-003/RP-001, 2 x DEPT| LFB-003/CARP-001, 2 x Welfare Vehicle", type: "Fire", count: 6 },
                 { station: "Euston LFB Station", code: "LFB-004", location: "EUS", assets: "2 x EUS | LFB-004/ARAP-001, 2 x EUS | LFB-004/BASU-001, 2 x EUS | LFB-004/WL-001", type: "Fire", count: 6 },
                 { station: "North Whitechapel Station", code: "LFB-006", location: "NWCP", assets: "2 x NWCP | LFB-006/WL-001, 2 x NWCP | LFB-006/WL-002", type: "Fire", count: 4 },
                 { station: "Queensway Station", code: "LFB-007", location: "QW", assets: "2 x QW | LFB-007/WL-001, 2 x QW | LFB-007/WL-002", type: "Fire", count: 4 },
-                { station: "Whitechapel station", code: "LFB-008", location: "WCP", assets: "2 x Ambulance, 2 x Boat Trailer, 2 x Light 4x4, 2 x PM, 2 x Rescue Pod, 2 x WCP | LFB-008/L4x4-001, 2 x WCP | LFB-008/WL-001", type: "Fire", count: 14 },
+                { station: "Whitechapel station", code: "LFB-008", location: "WCP", assets: "2 x WCP | LFB-008/L4x4-001, 2 x WCP | LFB-008/WL-001, 2 x Boat Trailer, 2 x Light 4x4, 2 x PM, 2 x Rescue Pod", type: "Fire", count: 12 },
                 { station: "Shoreditch (N)", code: "LFB-010", location: "SHRD (N)", assets: "2 x SHRD (N) | LFB-010/CARP-001, 2 x SHRD (N) | LFB-010/WFV-001", type: "Fire", count: 4 },
                 { station: "City of London Police", code: "MET-001", location: "CoLP", assets: "2 x CoLP | MET-001/IRV-001, 2 x CoLP | MET-001/IRV-002", type: "Police", count: 4 },
                 { station: "Ingleton MET station", code: "MET-002", location: "ING", assets: "2 x ING | MET-002/IRV-001, 2 x ING | MET-002/IRV-002", type: "Police", count: 4 },
@@ -243,8 +241,8 @@
                 { station: "Monument HRL", code: "N/A", location: "N/A", assets: "2 x Fire Officer", type: "Fire", count: 2 },
                 { station: "ORM-B-T-01 NR30", code: "N/A", location: "N/A", assets: "2 x RRV", type: "Logistics", count: 2 },
                 { station: "Chelsea RCC", code: "RCC-001", location: "CHLSE", assets: "2 x CHLSE | RCC-001/FBRC-001, 2 x CHLSE | RCC-001/FBRC-002", type: "Logistics", count: 4 },
-                { station: "Westminster LFBS N/E L/S", code: "RNLI-001", location: "WSTM’R", assets: "2 x ALB, 2 x WSTM’R | RNLI-001/4X4-001, 2 x WSTM’R | RNLI-001/ILB-001", type: "SAR", count: 6 },
-                { station: "HQ Westminster", code: "SAR-001", location: "WSTM’R", assets: "2 x Control Van (SAR), 2 x WSTM’R | SAR-001/OST-001, 2 x WSTM’R | SAR-001/OSV-001, 2 x WSTM’R | SAR-001/SAR4X4-001", type: "SAR", count: 8 }
+                { station: "Westminster LFBS N/E L/S", code: "RNLI-001", location: "WSTM’R", assets: "2 x WSTM’R | RNLI-001/4X4-001, 2 x WSTM’R | RNLI-001/ILB-001", type: "SAR", count: 4 },
+                { station: "HQ Westminster", code: "SAR-001", location: "WSTM’R", assets: "2 x WSTM’R | SAR-001/OST-001, 2 x WSTM’R | SAR-001/OSV-001, 2 x WSTM’R | SAR-001/SAR4X4-001", type: "SAR", count: 6 }
             ],
             'Harrogate District Dispatch Centre': [
                 { station: "Harrogate Fire station", code: "HRLNY-001", location: "HGFS", assets: "2 x HGFS | HRLNY-001/FO-001", type: "Fire", count: 2 },
@@ -266,26 +264,26 @@
             ],
             'P’mouth,S’ampton,E’leigh Dispatch': [
                 { station: "Chilworth OLD HPS", code: "N/A", location: "N/A", assets: "2 x Aerial Appliance, 2 x CARP, 2 x Rescue Support Unit (RSU)", type: "Fire", count: 6 },
-                { station: "Southampton Central FS", code: "HFS-001", location: "SHPTCFS", assets: "2 x HazMat Unit, 2 x SHPTCFS | HFS-001/WL-001, 2 x SHPTCFS | HFS-001/WL-002", type: "Fire", count: 6 },
-                { station: "Redbridge Fire Station", code: "HFS-002", location: "RBR", assets: "2 x ICCU, 2 x RBR | HFS-002/BASU-001, 2 x RBR | HFS-002/CARP-001", type: "Fire", count: 6 },
-                { station: "St Mary’s Fire station", code: "HFS-003", location: "STMRYFS", assets: "6 x CARP, 2 x STMRYFS | HFS-003/RSU-001, 6 x STMRYFS | HFS-003/WL-001, 2 x Welfare Vehicle", type: "Fire", count: 16 },
-                { station: "HPFS,IoW Eastleigh HQ", code: "HFS-004", location: "ELGH", assets: "2 x CARP, 2 x Drone Vehicle (Fire Station), 2 x Drone Vehicle (Fire Station), 2 x ELGH | HFS-004/CARP-001, 2 x ELGH | HFS-004/FO-001", type: "Fire", count: 10 },
-                { station: "Southampton Central Station", code: "HPS-001", location: "SMPC", assets: "2 x ARV, 2 x SMPC | HPS-001/IRV-001, 2 x SMPC | HPS-001/IRV-002", type: "Police", count: 6 },
-                { station: "Portswood Station", code: "HPS-002", location: "PW", assets: "2 x DSU, 2 x PW | HPS-002/IRV-001, 2 x PW | HPS-002/IRV-002", type: "Police", count: 6 },
-                { station: "Hythe Police Station", code: "HPS-003", location: "HYPS", assets: "2 x Detention Van, 2 x Firearms Personnel Carrier, 2 x HYPS | HPS-003/IRV-001, 2 x Mounted Unit, 2 x Multiple Dog Carrier", type: "Police", count: 10 },
-                { station: "Totton Police Station", code: "HPS-004", location: "TTNPS", assets: "2 x ARV, 2 x Mounted Unit, 2 x TTNPS | HPS-004/IRV-001", type: "Police", count: 6 },
+                { station: "Southampton Central FS", code: "HFS-001", location: "SHPTCFS", assets: "2 x SHPTCFS | HFS-001/WL-001, 2 x SHPTCFS | HFS-001/WL-002, 2 x HazMat Unit", type: "Fire", count: 6 },
+                { station: "Redbridge Fire Station", code: "HFS-002", location: "RBR", assets: "2 x RBR | HFS-002/BASU-001, 2 x RBR | HFS-002/CARP-001, 2 x ICCU", type: "Fire", count: 6 },
+                { station: "St Mary’s Fire station", code: "HFS-003", location: "STMRYFS", assets: "2 x STMRYFS | HFS-003/RSU-001, 6 x STMRYFS | HFS-003/WL-001, 6 x CARP, 2 x Welfare Vehicle", type: "Fire", count: 16 },
+                { station: "HPFS,IoW Eastleigh HQ", code: "HFS-004", location: "ELGH", assets: "2 x ELGH | HFS-004/CARP-001, 2 x ELGH | HFS-004/FO-001, 2 x CARP, 2 x Drone Vehicle (Fire Station), 2 x Drone Vehicle (Fire Station)", type: "Fire", count: 10 },
+                { station: "Southampton Central Station", code: "HPS-001", location: "SMPC", assets: "2 x SMPC | HPS-001/IRV-001, 2 x SMPC | HPS-001/IRV-002, 2 x ARV", type: "Police", count: 6 },
+                { station: "Portswood Station", code: "HPS-002", location: "PW", assets: "2 x PW | HPS-002/IRV-001, 2 x PW | HPS-002/IRV-002, 2 x DSU", type: "Police", count: 6 },
+                { station: "Hythe Police Station", code: "HPS-003", location: "HYPS", assets: "2 x HYPS | HPS-003/IRV-001, 2 x Detention Van, 2 x Firearms Personnel Carrier, 2 x Mounted Unit, 2 x Multiple Dog Carrier", type: "Police", count: 10 },
+                { station: "Totton Police Station", code: "HPS-004", location: "TTNPS", assets: "2 x TTNPS | HPS-004/IRV-001, 2 x ARV, 2 x Mounted Unit", type: "Police", count: 6 },
                 { station: "Shirley Police station", code: "HPS-005", location: "SHLYPS", assets: "2 x SHLYPS | HPS-005/IRV-001", type: "Police", count: 2 },
                 { station: "Swaythling Police station", code: "HPS-006", location: "SWYG", assets: "2 x SWYG | HPS-006/IRV-001", type: "Police", count: 2 },
                 { station: "Eastleigh Airport", code: "HPS-007", location: "EGLHAP", assets: "2 x EGLHAP | HPS-007/IRV-001, 2 x Traffic Car", type: "Police", count: 4 },
                 { station: "Marsh Lane HRL", code: "N/A", location: "N/A", assets: "2 x RRV", type: "Logistics", count: 2 },
                 { station: "Redbridge HRL/FO", code: "N/A", location: "N/A", assets: "2 x Fire Officer", type: "Fire", count: 2 },
                 { station: "Regent’s Park Southampton RCC", code: "N/A", location: "N/A", assets: "2 x Flatbed Recovery Vehicle, 2 x Flatbed Recovery Vehicle, 2 x HGV Recovery Vehicle", type: "Logistics", count: 6 },
-                { station: "Southampton General station", code: "SCAS-001", location: "STHPGS", assets: "2 x Mass Casualty Equipment, 2 x STHPGS | SCAS-001/AMB-001, 2 x STHPGS | SCAS-001/AMB-002", type: "Medical", count: 6 },
+                { station: "Southampton General station", code: "SCAS-001", location: "STHPGS", assets: "2 x STHPGS | SCAS-001/AMB-001, 2 x STHPGS | SCAS-001/AMB-002, 2 x Mass Casualty Equipment", type: "Medical", count: 6 },
                 { station: "Chandlers ford Station", code: "SCAS-002", location: "CFS", assets: "2 x CFS | SCAS-002/AMB-001, 2 x CFS | SCAS-002/OTL-001", type: "Medical", count: 4 },
                 { station: "SGH/HRL", code: "N/A", location: "N/A", assets: "2 x Coastguard Commander", type: "SAR", count: 2 },
                 { station: "Southampton CGS", code: "N/A", location: "N/A", assets: "2 x CRV, 2 x Coastguard Rope Rescue Unit, 2 x Flood Rescue Unit (Trailer), 2 x Search Dog Unit", type: "SAR", count: 8 },
                 { station: "Southampton Common HRL (S)", code: "N/A", location: "N/A", assets: "2 x Fire Officer", type: "Fire", count: 2 },
-                { station: "Southampton Port SRHQ", code: "SARHQ-001", location: "STHP", assets: "2 x Crew Carrier (SAR), 2 x SAR Flood Rescue (Trailer), 2 x SAR Flood Rescue (Trailer), 2 x STHP | SARHQ-001/4x4-001, 2 x STHP | SARHQ-001/CC-001, 2 x STHP | SARHQ-001/OST-001", type: "SAR", count: 12 }
+                { station: "Southampton Port SRHQ", code: "SARHQ-001", location: "STHP", assets: "2 x STHP | SARHQ-001/4x4-001, 2 x STHP | SARHQ-001/CC-001, 2 x STHP | SARHQ-001/OST-001, 2 x Crew Carrier (SAR), 2 x SAR Flood Rescue (Trailer), 2 x SAR Flood Rescue (Trailer)", type: "SAR", count: 12 }
             ],
             'Sc’boro,Whitby,Bridlington Dispatch': [
                 { station: "North Bay CRS", code: "N/A", location: "N/A", assets: "2 x CRV", type: "SAR", count: 2 },
@@ -330,7 +328,7 @@
 
         // --- UTILITY FUNCTIONS ---
 
-        // Helper function to convert time to UK Time (GMT)
+        // (Unchanged)
         function getUKTime() {
             const now = new Date();
             const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -340,10 +338,8 @@
             const seconds = String(ukDate.getSeconds()).padStart(2, '0');
             return `${hours}:${minutes}:${seconds} GMT`;
         }
-
-        // *** REMOVED *** Countdown function (updateCountdown) as it's no longer used.
         
-        // --- UPDATED CALL STATS CALCULATION/SIMULATION (Daily Counter Fixed) ---
+        // *** UPDATED *** Call Stats Simulation
         function simulateCallStats() {
             const now = new Date();
             const hour = now.getHours(); 
@@ -363,17 +359,17 @@
 
             // Time Period Multipliers
             if (hour >= 0 && hour < 8) { // Night (00:00 - 07:59)
-                baseMultiplier = 0.5 + (Math.random() * 0.17); 
+                baseMultiplier = 0.33 + (Math.random() * 0.17); 
             } else if (hour >= 8 && hour < 12) { // Morning (08:00 - 11:59)
-                baseMultiplier = 1 + (Math.random() * 0.23); 
+                baseMultiplier = 0.10 + (Math.random() * 0.23); 
             } else if (hour >= 12 && hour < 17) { // Afternoon (12:00 - 16:59)
-                baseMultiplier = 0.75 + (Math.random() * 1.5); 
+                baseMultiplier = 0.5 + (Math.random() * 1.5); 
             } else if (hour >= 17 && hour < 24) { // Evening (17:00 - 23:59)
-                baseMultiplier = 3 + (Math.random() * 0.5); 
+                baseMultiplier = 0.5 + (Math.random() * 0.5); 
 
                 // Weekend/Friday Evening Boost
                 if (isWeekend || (day === 5 && hour >= 17)) {
-                    baseMultiplier *= 3; 
+                    baseMultiplier *= 1.5; 
                 }
             }
 
@@ -382,25 +378,27 @@
             let simulatedCalls = Math.round(maxCallsBasedOnMultiplier);
             callStats.currentCalls = Math.min(simulatedCalls, MAX_SIMULTANEOUS_CALLS);
             
-            // *** THIS IS THE CORRECTED LINE ***
+            // *** CORRECTED *** This line is fixed from the typo
             callStats.callLoadPercentage = ((callStats.currentCalls / MAX_SIMULTANEOUS_CALLS) * 100).toFixed(1);
             
-            // ** DAILY CALL COUNTER INCREMENT LOGIC FIX **
+            // ** DAILY CALL COUNTER INCREMENT LOGIC (Updated for 3x speed) **
             const refreshIntervalSeconds = 1; 
-            const avgCallsPerSecond = baseMultiplier / 60; 
+            // 1x load = AVG_CALLS_PER_MINUTE (3) calls per minute.
+            const avgCallsPerSecond = (baseMultiplier * AVG_CALLS_PER_MINUTE) / 60; 
             
             if (Math.random() < avgCallsPerSecond * refreshIntervalSeconds) {
                  callsToday += 1;
             }
             
+            // Corrects for counter starting at 0 if page loaded late in the day
             if (callsToday === 0 && hour > 0) {
-                 const callsSinceMidnightEstimate = Math.round((hour * 60) * 0.2); 
+                 // Estimate based on 0.2x load at 3 calls/min
+                 const callsSinceMidnightEstimate = Math.round((hour * 60) * (AVG_CALLS_PER_MINUTE * 0.2)); 
                  callsToday = Math.max(0, callsSinceMidnightEstimate);
             }
         }
 
-
-        // --- STATS CALCULATION (UNCHANGED, but now uses new data) ---
+        // --- STATS CALCULATION (Unchanged, but now uses new data) ---
 
         function calculateStats() {
             let totalUnits = 0;
@@ -447,6 +445,7 @@
 
         // --- UI RENDERING ---
 
+        // (Unchanged)
         function renderKPIs() {
             const kpiContainer = document.getElementById('kpi-summary');
             const currentStatus = areaStatus[activeRegionKey] || areaStatus.default;
@@ -493,6 +492,7 @@
             document.getElementById('update-time').textContent = `Last Data Refresh: ${getUKTime()}`;
         }
         
+        // (Unchanged)
         function renderNewsFeed() {
             const newsContainer = document.getElementById('news-feed-container');
             newsContainer.innerHTML = '';
@@ -511,8 +511,8 @@
             });
         }
 
+        // (Unchanged)
         function renderCharts() {
-            // Ensure Chart.js is loaded before trying to get context
             if (typeof Chart === 'undefined') {
                 console.error("Chart.js not loaded. Cannot render charts.");
                 return;
@@ -543,8 +543,6 @@
                 }
             };
 
-
-            // Asset Mix Chart (Donut)
             assetMixChart = new Chart(ctxMix, {
                 type: 'doughnut',
                 data: {
@@ -566,7 +564,6 @@
                 }
             });
 
-            // Regional Distribution Chart (Bar)
             regionalChart = new Chart(ctxRegional, {
                 type: 'bar',
                 data: {
@@ -590,10 +587,10 @@
             });
         }
 
-        // --- RENDER CALL STATS CARD (UNCHANGED) ---
+        // *** UPDATED *** Call Stats Card
         function renderCallStatsCard() {
             const container = document.getElementById('call-stats-container');
-            const max = MAX_SIMULTANEOUS_CALLS;
+            const max = MAX_SIMULTANEOUS_CALLS; // Now 24
             const current = callStats.currentCalls;
             const percentage = callStats.callLoadPercentage;
 
@@ -604,10 +601,11 @@
                 barColor = 'bg-yellow-500';
             }
             
-            const averageIntervalText = `${AVG_CALL_FREQUENCY_MIN} minute`;
+            const averageIntervalText = "20 seconds"; // Hardcoded for 3x speed
             const callTimeText = `${AVG_CALL_DURATION_MINS} minutes`;
-            const potentialCallsPerHour = Math.round(60 / AVG_CALL_FREQUENCY_MIN);
-            const systemCapacity = stats.totalUnits; // Changed to use new total
+            // 1x load = 3 calls/min * 60 min = 180 calls/hour
+            const potentialCallsPerHour = Math.round(60 * AVG_CALLS_PER_MINUTE); 
+            const systemCapacity = stats.totalUnits; // Now uses correctly parsed total
 
 
             container.innerHTML = `
@@ -625,7 +623,7 @@
                         <p class="text-2xl sm:text-3xl font-extrabold text-white mt-1">${callTimeText}</p>
                     </div>
                     <div class="kpi-card p-4 rounded-xl border-t-4 border-t-blue-500">
-                        <p class="text-sm font-medium text-gray-400">Potential Calls/Hour</p>
+                        <p class="text-sm font-medium text-gray-400">Potential Calls/Hour (1x)</p>
                         <p class="text-2xl sm:text-3xl font-extrabold text-white mt-1">${potentialCallsPerHour}</p>
                     </div>
                 </div>
@@ -643,7 +641,7 @@
                 <div class="p-4 bg-[#1c233a] rounded-lg border border-gray-700/50">
                     <h4 class="text-lg font-bold text-blue-400 mb-2">Dispatch Model Configuration</h4>
                     <ul class="text-sm space-y-1 text-gray-400 list-disc list-inside">
-                        <li>**Average Call Start Interval:** One call every **${averageIntervalText}**.</li>
+                        <li>**Average Call Start Interval:** One call every **${averageIntervalText}** (at 1x load).</li>
                         <li>**Calls Today:** The system has processed **${callsToday.toLocaleString()}** calls since midnight GMT.</li>
                         <li>**Model Note:** Current calls are dynamically adjusted based on time-of-day multipliers and system capacity.</li>
                     </ul>
@@ -651,12 +649,10 @@
             `;
         }
         
-        // --- LOCAL ASSET VIEW LOGIC (SIMPLIFIED) ---
+        // --- LOCAL ASSET VIEW LOGIC (Unchanged) ---
 
         function handleRegionChange(regionKey) {
             activeRegionKey = regionKey;
-            
-            // *** REMOVED *** countdown interval clear, as it no longer exists
             
             calculateStats(); 
             renderKPIs(); 
@@ -712,10 +708,6 @@
                 `;
                 return tableHtml;
             }
-
-            // *** UPDATED ***
-            // Removed special 'if' cases for Southampton_Planned and Expansion_Planning.
-            // All regions now use the default table generation.
             
             if (regionKey === 'default') {
                 htmlContent = `<p class="text-center text-gray-500 py-10">Use the selector above to filter local assets.</p>`;
@@ -728,16 +720,15 @@
             container.innerHTML = htmlContent;
         }
         
-        // --- INITIALIZATION (Updated Interval) ---
+        // --- INITIALIZATION (Unchanged) ---
         function initDashboard() {
-            // Check for initial load errors by ensuring the container exists
             if (!document.getElementById('kpi-summary')) {
                 console.error("Dashboard failed to initialize: Missing 'kpi-summary' element.");
                 return;
             }
             
             calculateStats();
-            simulateCallStats(); // Initial call to calculate baseline counts
+            simulateCallStats(); 
             
             renderKPIs();
             renderCharts();
@@ -746,9 +737,8 @@
             
             renderLocalAssetView('default');
 
-            // CLEANED UP: Refresh interval set to 1 second (1000ms) for real-time feel
             setInterval(function() {
-                renderKPIs(); // This calls simulateCallStats() which updates all counters
+                renderKPIs(); 
                 renderCallStatsCard();
             }, 1000); 
         }
@@ -756,7 +746,7 @@
         window.onload = initDashboard;
     </script>
     <script>
-    // Register the Service Worker (PWA functionality)
+    // Register the Service Worker (PWA functionality) - (Unchanged)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('/service-worker.js')
