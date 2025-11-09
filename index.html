@@ -381,7 +381,9 @@
             const maxCallsBasedOnMultiplier = MAX_SIMULTANEOUS_CALLS * baseMultiplier * randomFluctuation;
             let simulatedCalls = Math.round(maxCallsBasedOnMultiplier);
             callStats.currentCalls = Math.min(simulatedCalls, MAX_SIMULTANEOUS_CALLS);
-            callStats.callLoadPercentage = ((callStats.currentCalls / MAX_SIMULTEOUS_CALLS) * 100).toFixed(1);
+            
+            // *** THIS IS THE CORRECTED LINE ***
+            callStats.callLoadPercentage = ((callStats.currentCalls / MAX_SIMULTANEOUS_CALLS) * 100).toFixed(1);
             
             // ** DAILY CALL COUNTER INCREMENT LOGIC FIX **
             const refreshIntervalSeconds = 1; 
@@ -396,6 +398,7 @@
                  callsToday = Math.max(0, callsSinceMidnightEstimate);
             }
         }
+
 
         // --- STATS CALCULATION (UNCHANGED, but now uses new data) ---
 
