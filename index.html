@@ -309,21 +309,26 @@
         };
 
 
-        // Static or user-provided news updates (UNCHANGED)
+                // Static or user-provided news updates (UPDATED by user request - 20:17 OVST)
         let newsUpdates = [
-            { timestamp: '06:30 GMT', headline: '**NEW DISPATCH CENTRE:** Southampton (South Coast Active) Dispatch Centre is now fully operational.', category: 'Expansion' },
-            { timestamp: '06:25 GMT', headline: 'Southampton Central FS (`HFS-001`) Declared Full Operational Capacity with **8 Water Carriers**.', category: 'Fire' },
-            { timestamp: '06:15 GMT', headline: 'Portswood Police Station (`HPS-002`) Now Active: **8 IRV** units deployed for immediate regional response.', category: 'Police' },
-            { timestamp: '06:00 GMT', headline: 'Eastleigh Airport (`HPS-007`) Police Unit activated. **4 IRV** deployed for rapid transit area security.', category: 'Police' },
-            { timestamp: '05:30 GMT', headline: 'Redbridge & St Mary’s Fire Stations fully staffed (HFS-002/003) as part of Phase 1 South Coast roll-out.', category: 'Fire' },
-            { timestamp: '04:15 GMT', headline: 'London West: Marble Arch stations (`MET-003`, `LAS-004`, `LFB-005`) report 100% asset readiness.', category: 'Medical' },
-            { timestamp: '23:00 ÖVST', headline: 'Dispà UK Confirms **Southampton** as Next Primary Infrastructure Target (Original Announcement).', category: 'Expansion' },
-            { timestamp: '22:50 ÖVST', headline: 'Isle of Wight Major Development Plan Approved: New Hospitals & Operational Centers.', category: 'Expansion' },
-            { timestamp: '22:45 ÖVST', headline: 'End of October Financial Report (EoOFR) Scheduled for **23:59 Release** Today.', category: 'Corporate' },
-            { timestamp: '22:30 ÖVST', headline: 'Harrogate (ÖVC) Station P-003 Declared Full Operational Capacity.', category: 'Police' },
-            { timestamp: '21:40 ÖVST', headline: 'London Central RCC Flatbed Recovery Units Deployed to M4 Emergency.', category: 'Logistics' },
-            { timestamp: '19:00 ÖVST', headline: 'SAR HQ Westminster reports high readiness state for marine operations.', category: 'SAR' },
+            // ÖestVèl (Harrogate) / North Yorkshire Focus
+            { timestamp: '20:15 OVST', headline: 'ÖestVèl Royal Decree: Annual TMC Brunch scheduled for Monday. All units to remain on high alert.', category: 'ÖestVèl Event' },
+            { timestamp: '19:30 OVST', headline: 'Ripon Station Update: Joint Police/Fire Station refurbishment complete. £926,000 VC€ 1,814,960 investment confirmed.', category: 'Fire' },
+            { timestamp: '18:50 OVST', headline: 'Scarborough Lights Event: High resource planning initiated for illuminated light festival starting November 14th.', category: 'Scarborough Event' },
+            { timestamp: '17:00 OVST', headline: 'Operation Trailblaze: Rural Police patrols continue across North Yorkshire to tackle anti-social driving.', category: 'Police' },
+            
+            // Major National Infrastructure & Health Updates
+            { timestamp: '15:45 OVST', headline: 'National Health: New resource toolkit launched to support ambulance staff after distressing incidents.', category: 'Medical' },
+            { timestamp: '14:20 OVST', headline: 'UKHSA: Flu Vaccine Campaign underway. Over 5 million under-65s urged to vaccinate.', category: 'Medical' },
+
+            // Retained Key Historical/Corporate Updates (With Adjusted Timestamps)
+            { timestamp: '12:00 OVST', headline: 'End of October Financial Report (EoOFR) Scheduled for **23:59 Release** Today.', category: 'Corporate' },
+            { timestamp: '11:30 OVST', headline: 'Isle of Wight Major Development Plan Approved: New Hospitals & Operational Centers.', category: 'Expansion' },
+            { timestamp: '10:00 OVST', headline: 'Dispà UK Confirms **Southampton** as Next Primary Infrastructure Target (Original Announcement).', category: 'Expansion' },
+            { timestamp: '08:00 OVST', headline: 'London Central RCC Flatbed Recovery Units Deployed to M4 Emergency.', category: 'Logistics' },
+            { timestamp: '06:00 OVST', headline: 'SAR HQ Westminster reports high readiness state for marine operations.', category: 'SAR' },
         ];
+
 
 
         // --- UTILITY FUNCTIONS ---
